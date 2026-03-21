@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Corby Business Academy — KS3 Year 8 Computer Science</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1e3a5f;
+    --accent: #00d4ff;
+    --accent2: #ff6b35;
+    --accent3: #39ff14;
+    --text: #e0f0ff;
+    --text-dim: #6b8cad;
+    --red: #ff4757;
+    --yellow: #ffd32a;
+    --green: #39ff14;
+    --p1: #00d4ff;
+    --p2: #ff6b35;
+  }
+
+  /* ── LIGHT MODE ── */
+  body.light {
+    --bg: #f0f4f8;
+    --surface: #ffffff;
+    --surface2: #e8edf5;
+    --border: #b0c4de;
+    --text: #0a1825;
+    --text-dim: #4a6a8a;
+    --accent: #0077a8;
+    --accent2: #c85000;
+  }
+  body.light::before { background: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,119,168,0.03) 2px,rgba(0,119,168,0.03) 4px); }
+  body.light .wordle-cell { background: #fff; }
+  body.light .kb-key, body.light .hm-key { background: #e0e8f0; }
+  body.light .c4-opt, body.light .quiz-opt { background: #edf2f7; color: var(--text); }
+
+  /* ── COLOUR FILTERS ── */
+  .filter-overlay { position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:0;transition:opacity .3s; }
+  body.filter-blue  .filter-overlay { background:rgba(100,160,230,0.18);opacity:1; }
+  body.filter-green .filter-overlay { background:rgba(80,200,120,0.16);opacity:1; }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'Exo 2',sans-serif; min-height:100vh; overflow-x:hidden; transition:background .3s,color .3s; }
+  body::before { content:''; position:fixed; inset:0; background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,212,255,0.015) 2px,rgba(0,212,255,0.015) 4px); pointer-events:none; z-index:0; }
+  .scanline { position:fixed; top:-100%; left:0; width:100%; height:200%; background:linear-gradient(transparent 50%,rgba(0,212,255,0.025) 50%); background-size:100% 4px; animation:scanmove 8s linear infinite; pointer-events:none; z-index:1; }
+  @keyframes scanmove { to { top:0%; } }
+
+  /* ── HEADER ── */
+  header { text-align:center; padding:1.6rem 1rem 1.2rem; position:relative; z-index:10; border-bottom:1px solid var(--border); background:linear-gradient(180deg,rgba(0,212,255,0.05) 0%,transparent 100%); }
+  header h1 { font-family:'Orbitron',monospace; font-size:clamp(1.3rem,4vw,2.4rem); font-weight:900; letter-spacing:0.12em; color:var(--accent); text-shadow:0 0 25px rgba(0,212,255,0.5); }
+  header p { font-family:'Share Tech Mono',monospace; color:var(--text-dim); font-size:0.78rem; margin-top:0.3rem; letter-spacing:0.08em; }
+  .header-controls { display:flex; justify-content:center; gap:0.5rem; margin-top:0.8rem; flex-wrap:wrap; }
+
+  /* ── TOGGLE BUTTONS ── */
+  .toggle-btn {
+    font-family:'Share Tech Mono',monospace; font-size:0.68rem; padding:0.3rem 0.8rem;
+    background:transparent; border:1px solid var(--border); color:var(--text-dim);
+    cursor:pointer; transition:all 0.2s; letter-spacing:0.05em;
+  }
+  .toggle-btn:hover { border-color:var(--accent); color:var(--accent); }
+  .toggle-btn.active-blue  { border-color:#6495ED; color:#6495ED; background:rgba(100,149,237,0.15); }
+  .toggle-btn.active-green { border-color:#3CB371; color:#3CB371; background:rgba(60,179,113,0.12); }
+  .toggle-btn.active-light { border-color:var(--accent2); color:var(--accent2); background:rgba(255,107,53,0.1); }
+
+  /* ── NAV ── */
+  nav { display:flex; justify-content:center; gap:0.4rem; padding:1rem; flex-wrap:wrap; position:relative; z-index:10; border-bottom:1px solid var(--border); }
+  .nav-btn { font-family:'Orbitron',monospace; font-size:0.65rem; font-weight:700; letter-spacing:0.1em; padding:0.5rem 1rem; background:transparent; border:1px solid var(--border); color:var(--text-dim); cursor:pointer; transition:all 0.2s; text-transform:uppercase; clip-path:polygon(7px 0%,100% 0%,calc(100% - 7px) 100%,0% 100%); }
+  .nav-btn:hover, .nav-btn.active { background:var(--accent); color:var(--bg); border-color:var(--accent); box-shadow:0 0 18px rgba(0,212,255,0.4); text-shadow:none; }
+
+  /* ── SCREENS ── */
+  .screen { display:none; position:relative; z-index:10; padding:2rem 1rem; min-height:60vh; }
+  .screen.active { display:block; }
+  #home { display:none; max-width:900px; margin:0 auto; }
+  #home.active { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:1.2rem; }
+
+  /* ── CARDS ── */
+  .game-card { background:var(--surface); border:1px solid var(--border); padding:1.8rem 1.2rem; text-align:center; cursor:pointer; transition:all 0.25s; position:relative; overflow:hidden; }
+  .game-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--accent); transform:scaleX(0); transform-origin:left; transition:transform 0.3s; }
+  .game-card:hover::before { transform:scaleX(1); }
+  .game-card:hover { border-color:var(--accent); background:var(--surface2); transform:translateY(-4px); box-shadow:0 8px 28px rgba(0,212,255,0.15); }
+  .card-icon { font-size:2.6rem; margin-bottom:0.8rem; display:block; }
+  .card-title { font-family:'Orbitron',monospace; font-size:0.9rem; font-weight:700; color:var(--accent); margin-bottom:0.4rem; }
+  .card-desc { font-size:0.8rem; color:var(--text-dim); line-height:1.5; }
+  .card-topic { font-family:'Share Tech Mono',monospace; font-size:0.65rem; color:var(--accent2); margin-top:0.6rem; letter-spacing:0.06em; }
+
+  /* ── SECTION HEADER ── */
+  .section-header { text-align:center; margin-bottom:1.8rem; }
+  .section-header h2 { font-family:'Orbitron',monospace; font-size:1.5rem; font-weight:700; color:var(--accent); text-shadow:0 0 18px rgba(0,212,255,0.35); margin-bottom:0.3rem; }
+  .section-header p { font-size:0.82rem; color:var(--text-dim); font-family:'Share Tech Mono',monospace; }
+  /* Ensure text visibility in all modes */
+  .quiz-opt, .c4-opt { color:var(--text) !important; }
+  #wordle-hint, #hm-hint { color:var(--text) !important; }
+  #c4-q-text, #c4-turn-msg { color:var(--text) !important; }
+
+  /* ── BUTTONS ── */
+  .btn { font-family:'Orbitron',monospace; font-size:0.72rem; font-weight:700; letter-spacing:0.1em; padding:0.6rem 1.4rem; background:transparent; border:1px solid var(--accent); color:var(--accent); cursor:pointer; transition:all 0.2s; text-transform:uppercase; }
+  .btn:hover { background:var(--accent); color:var(--bg); box-shadow:0 0 18px rgba(0,212,255,0.35); }
+  .btn.accent2 { border-color:var(--accent2); color:var(--accent2); }
+  .btn.accent2:hover { background:var(--accent2); color:#fff; }
+
+  /* ── MESSAGES ── */
+  .msg { font-family:'Share Tech Mono',monospace; font-size:0.88rem; text-align:center; padding:0.75rem; margin:0.75rem 0; border:1px solid var(--border); min-height:2.4rem; }
+  .msg.correct { color:var(--green); border-color:var(--green); background:rgba(57,255,20,0.05); }
+  .msg.wrong   { color:var(--red);   border-color:var(--red);   background:rgba(255,71,87,0.05); }
+  .msg.info    { color:var(--accent); border-color:var(--accent); background:rgba(0,212,255,0.05); }
+
+  /* ══ WORDLE ══ */
+  #wordle { max-width:500px; margin:0 auto; }
+  #wordle-category { font-family:'Share Tech Mono',monospace; font-size:0.75rem; color:var(--accent2); text-align:center; margin-bottom:0.4rem; letter-spacing:0.08em; }
+  #wordle-hint { font-family:'Share Tech Mono',monospace; font-size:0.85rem; color:var(--text); text-align:center; margin-bottom:1rem; padding:0.6rem 0.8rem; border:1px dashed var(--border); line-height:1.5; }
+  #wordle-grid { display:flex; flex-direction:column; gap:4px; align-items:center; margin-bottom:1rem; }
+  .wordle-row { display:flex; gap:4px; }
+  .wordle-cell { width:46px; height:46px; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; font-family:'Orbitron',monospace; font-size:1.1rem; font-weight:700; text-transform:uppercase; transition:all 0.15s; background:var(--surface); color:var(--text); }
+  .wordle-cell.filled { border-color:var(--text-dim); }
+  .wordle-cell.correct { background:#1a3d1a; border-color:var(--green); color:var(--green); box-shadow:0 0 8px rgba(57,255,20,0.3); }
+  .wordle-cell.present { background:#3d2e00; border-color:var(--yellow); color:var(--yellow); }
+  .wordle-cell.absent  { background:#1a1a1a; border-color:#333; color:#555; }
+  body.light .wordle-cell.absent { background:#ddd; border-color:#aaa; color:#999; }
+  @keyframes flip  { 0%{transform:scaleY(1)} 50%{transform:scaleY(0)} 100%{transform:scaleY(1)} }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+  .wordle-cell.flip { animation:flip 0.4s ease; }
+  .wordle-row.shake { animation:shake 0.3s ease; }
+  #wordle-input-row { display:flex; gap:0.5rem; justify-content:center; margin-bottom:1rem; }
+  #wordle-input { font-family:'Share Tech Mono',monospace; font-size:1rem; background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:0.5rem 1rem; text-transform:uppercase; width:160px; letter-spacing:0.2em; outline:none; }
+  #wordle-input:focus { border-color:var(--accent); }
+  #wordle-keyboard { display:flex; flex-direction:column; gap:4px; align-items:center; }
+  .kb-row { display:flex; gap:3px; }
+  .kb-key { font-family:'Share Tech Mono',monospace; font-size:0.7rem; padding:0.4rem 0.45rem; min-width:28px; background:var(--surface2); border:1px solid var(--border); color:var(--text); cursor:pointer; transition:all 0.15s; text-align:center; }
+  .kb-key:hover { border-color:var(--accent); color:var(--accent); }
+  .kb-key.correct { background:#1a3d1a; border-color:var(--green); color:var(--green); }
+  .kb-key.present { background:#3d2e00; border-color:var(--yellow); color:var(--yellow); }
+  .kb-key.absent  { background:#111; border-color:#222; color:#333; }
+  .kb-key.wide    { min-width:50px; }
+
+  /* ══ QUIZ ══ */
+  #quiz { max-width:620px; margin:0 auto; }
+  .quiz-meta { display:flex; justify-content:space-between; font-family:'Share Tech Mono',monospace; font-size:0.76rem; color:var(--text-dim); margin-bottom:1rem; padding-bottom:0.6rem; border-bottom:1px solid var(--border); }
+  .quiz-meta span { color:var(--accent); }
+  .quiz-progress { width:100%; height:4px; background:var(--surface2); margin-bottom:1.2rem; }
+  .quiz-progress-bar { height:100%; background:var(--accent); transition:width 0.4s; box-shadow:0 0 8px var(--accent); }
+  #quiz-category-tag { font-family:'Share Tech Mono',monospace; font-size:0.72rem; color:var(--accent2); margin-bottom:0.5rem; letter-spacing:0.08em; }
+  #quiz-question { font-size:1.3rem; font-weight:600; line-height:1.55; margin-bottom:1.2rem; padding:1rem; background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--accent); color:var(--text) !important; }
+  .quiz-options { display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-bottom:1rem; }
+  @media(max-width:480px){ .quiz-options { grid-template-columns:1fr; } }
+  .quiz-opt { padding:0.75rem 0.9rem; background:var(--surface2); border:1px solid var(--border); color:var(--text); cursor:pointer; font-size:0.9rem; text-align:left; transition:all 0.15s; font-family:'Exo 2',sans-serif; }
+  .quiz-opt:hover:not(:disabled) { border-color:var(--accent); color:var(--accent); }
+  .quiz-opt.correct-ans { background:rgba(57,255,20,0.1); border-color:var(--green); color:var(--green); }
+  .quiz-opt.wrong-ans   { background:rgba(255,71,87,0.1);  border-color:var(--red);   color:var(--red); }
+  #quiz-explanation { font-family:'Share Tech Mono',monospace; font-size:0.82rem; color:var(--text-dim); padding:0.75rem; border:1px dashed var(--border); line-height:1.6; display:none; margin-bottom:0.8rem; }
+  .quiz-score-card { text-align:center; padding:2rem; }
+  .big-score { font-family:'Orbitron',monospace; font-size:4rem; font-weight:900; color:var(--accent); text-shadow:0 0 30px rgba(0,212,255,0.5); margin-bottom:1rem; }
+
+  /* ══ CONNECT 4 ══ */
+  #connect4 { max-width:700px; margin:0 auto; }
+  .c4-info { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem; flex-wrap:wrap; gap:0.5rem; }
+  .c4-player { font-family:'Share Tech Mono',monospace; font-size:0.8rem; padding:0.4rem 0.9rem; border:1px solid var(--border); transition:all 0.2s; }
+  .c4-player.p1 { color:var(--p1); }
+  .c4-player.p2 { color:var(--p2); }
+  .c4-player.active-player { border-width:2px; box-shadow:0 0 14px currentColor; }
+  #c4-turn-msg { font-family:'Share Tech Mono',monospace; font-size:0.8rem; color:var(--text-dim); text-align:center; margin-bottom:0.6rem; }
+  #c4-board { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; background:var(--surface); padding:8px; border:1px solid var(--border); margin-bottom:0.8rem; }
+  .c4-col-btn { background:transparent; border:1px solid transparent; color:var(--text-dim); font-size:0.9rem; cursor:pointer; padding:0.2rem; transition:all 0.15s; }
+  .c4-col-btn:hover { color:var(--accent); border-color:var(--accent); }
+  .c4-cell { width:100%; aspect-ratio:1; border-radius:50%; background:var(--surface2); border:2px solid var(--border); transition:all 0.15s; }
+  .c4-cell.p1 { background:var(--p1); border-color:var(--p1); box-shadow:0 0 8px var(--p1); }
+  .c4-cell.p2 { background:var(--p2); border-color:var(--p2); box-shadow:0 0 8px var(--p2); }
+  .c4-cell.win { animation:pulse 0.5s infinite alternate; }
+  @keyframes pulse { from{opacity:1} to{opacity:0.35} }
+  #c4-question-panel { background:var(--surface); border:1px solid var(--accent); padding:1.1rem; margin-bottom:0.8rem; display:none; box-shadow:0 0 16px rgba(0,212,255,0.1); }
+  #c4-question-panel h3 { font-family:'Orbitron',monospace; font-size:0.75rem; color:var(--accent2); margin-bottom:0.6rem; letter-spacing:0.1em; }
+  #c4-q-text { font-size:1.1rem; line-height:1.5; margin-bottom:0.9rem; color:var(--text); }
+  .c4-options { display:grid; grid-template-columns:1fr 1fr; gap:0.4rem; }
+  .c4-opt { padding:0.55rem 0.75rem; background:var(--surface2); border:1px solid var(--border); color:var(--text); cursor:pointer; font-size:0.82rem; text-align:left; transition:all 0.15s; }
+  .c4-opt:hover:not(:disabled) { border-color:var(--accent); color:var(--accent); }
+  .c4-opt.correct-ans { background:rgba(57,255,20,0.1); border-color:var(--green); color:var(--green); }
+  .c4-opt.wrong-ans   { background:rgba(255,71,87,0.1);  border-color:var(--red);   color:var(--red); }
+
+  /* ══ HANGMAN ══ */
+  #hangman { max-width:560px; margin:0 auto; }
+  .hangman-layout { display:grid; grid-template-columns:160px 1fr; gap:2rem; align-items:start; }
+  @media(max-width:480px){ .hangman-layout { grid-template-columns:1fr; } }
+  #hangman-svg { width:160px; height:180px; }
+  .hm-part { opacity:0; }
+  .hm-part.show { opacity:1; }
+  #hm-category { font-family:'Share Tech Mono',monospace; font-size:0.73rem; color:var(--accent2); letter-spacing:0.1em; margin-bottom:0.3rem; }
+  #hm-hint { font-family:'Share Tech Mono',monospace; font-size:0.85rem; color:var(--text); margin-bottom:0.9rem; line-height:1.5; padding:0.5rem 0.7rem; border:1px dashed var(--border); }
+  #hm-word-display { display:flex; gap:5px; flex-wrap:wrap; margin-bottom:1rem; }
+  .hm-letter { width:28px; height:34px; border-bottom:2px solid var(--accent); display:flex; align-items:center; justify-content:center; font-family:'Orbitron',monospace; font-size:1.1rem; font-weight:700; text-transform:uppercase; color:var(--text); }
+  .hm-letter.space { border-bottom-color:transparent; width:12px; }
+  #hm-lives { font-family:'Share Tech Mono',monospace; font-size:0.8rem; color:var(--text-dim); margin-bottom:0.9rem; }
+  #hm-lives span { color:var(--red); font-size:1rem; }
+  #hm-guessed { font-family:'Share Tech Mono',monospace; font-size:0.73rem; color:var(--text-dim); margin-bottom:0.9rem; min-height:1.4rem; }
+  #hm-keyboard { display:flex; flex-wrap:wrap; gap:3px; margin-bottom:0.9rem; }
+  .hm-key { font-family:'Share Tech Mono',monospace; font-size:0.73rem; width:30px; height:30px; background:var(--surface2); border:1px solid var(--border); color:var(--text); cursor:pointer; transition:all 0.15s; display:flex; align-items:center; justify-content:center; }
+  .hm-key:hover:not(:disabled) { border-color:var(--accent); color:var(--accent); }
+  .hm-key:disabled { opacity:0.2; cursor:default; }
+  .hm-key.hit  { background:rgba(57,255,20,0.15); border-color:var(--green); color:var(--green); }
+  .hm-key.miss { background:rgba(255,71,87,0.1);  border-color:var(--red);   color:var(--red); }
+
+  /* ── FOOTER ── */
+  footer { text-align:center; padding:1.2rem; font-family:'Share Tech Mono',monospace; font-size:0.7rem; color:var(--text-dim); border-top:1px solid var(--border); position:relative; z-index:10; letter-spacing:0.05em; }
+  .flex-center { display:flex; justify-content:center; gap:0.8rem; flex-wrap:wrap; }
+</style>
+</head>
+<body>
+<div class="filter-overlay" id="filter-overlay"></div>
+<div class="scanline"></div>
+<div id="name-bar" style="background:var(--surface2);border-bottom:1px solid var(--border);padding:.5rem 1.2rem;display:flex;align-items:center;gap:.8rem;position:relative;z-index:20;flex-wrap:wrap;">
+  <span style="font-family:'Share Tech Mono',monospace;font-size:.72rem;color:var(--text-dim);">YOUR NAME:</span>
+  <input id="player-name-input" type="text" placeholder="Enter your name…" maxlength="30" style="font-family:'Share Tech Mono',monospace;font-size:.8rem;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.3rem .7rem;outline:none;width:180px;" oninput="playerName=this.value.trim()"/>
+  <span style="font-family:'Share Tech Mono',monospace;font-size:.65rem;color:var(--text-dim);">Your scores will appear on the leaderboard</span>
+</div>
+
+<header>
+  <h1>⌨ KS3 COMPUTER SCIENCE</h1>
+  <p>// CORBY BUSINESS ACADEMY — YEAR 8 REVISION //</p>
+  <div class="header-controls">
+    <button class="toggle-btn" id="btn-light"  onclick="toggleLight()">☀ LIGHT</button>
+    <button class="toggle-btn" id="btn-blue"   onclick="toggleFilter('blue')">🔵 BLUE TINT</button>
+    <button class="toggle-btn" id="btn-green"  onclick="toggleFilter('green')">🟢 GREEN TINT</button>
+  </div>
+</header>
+
+<nav>
+  <button class="nav-btn active" onclick="showScreen('home')">HOME</button>
+  <button class="nav-btn" onclick="showScreen('wordle');initWordle()">WORDLE</button>
+  <button class="nav-btn" onclick="showScreen('quiz');initQuiz()">QUIZ</button>
+  <button class="nav-btn" onclick="showScreen('connect4');initConnect4()">CONNECT 4</button>
+  <button class="nav-btn" onclick="showScreen('hangman');initHangman()">HANGMAN</button>
+  <button class="nav-btn" onclick="showScreen('leaderboard');renderLeaderboard()">🏆 BOARD</button>
+</nav>
+
+<!-- HOME -->
+<div id="home" class="screen active">
+  <div class="game-card" onclick="showScreen('wordle');initWordle()">
+    <span class="card-icon">🟩</span>
+    <div class="card-title">CS WORDLE</div>
+    <div class="card-desc">Guess the hidden KS3 keyword in 6 tries. Green = right place, yellow = wrong place.</div>
+    <div class="card-topic">▸ BINARY/HEX · HTML · NETWORKS · SECURITY</div>
+  </div>
+  <div class="game-card" onclick="showScreen('quiz');initQuiz()">
+    <span class="card-icon">❓</span>
+    <div class="card-title">QUIZ MODE</div>
+    <div class="card-desc">10 multiple choice questions drawn randomly from a large bank. Race for a perfect score!</div>
+    <div class="card-topic">▸ ALL YEAR 8 TOPICS</div>
+  </div>
+  <div class="game-card" onclick="showScreen('connect4');initConnect4()">
+    <span class="card-icon">🔴</span>
+    <div class="card-title">CONNECT 4</div>
+    <div class="card-desc">2-player battle. Answer a CS question to place your piece. First to four in a row wins!</div>
+    <div class="card-topic">▸ VERSUS MODE</div>
+  </div>
+  <div class="game-card" onclick="showScreen('hangman');initHangman()">
+    <span class="card-icon">🪢</span>
+    <div class="card-title">HANGMAN</div>
+    <div class="card-desc">Guess the KS3 keyword letter by letter. You get a definition clue — use it wisely!</div>
+    <div class="card-topic">▸ KEYWORD RECALL</div>
+  </div>
+</div>
+
+<!-- WORDLE -->
+<div id="wordle" class="screen">
+  <div class="section-header">
+    <h2>CS WORDLE</h2>
+    <p>// guess the hidden year 8 keyword //</p>
+  </div>
+  <div id="wordle-category"></div>
+  <div id="wordle-hint"></div>
+  <div id="wordle-grid"></div>
+  <div id="wordle-msg" class="msg"></div>
+  <div id="wordle-input-row">
+    <input id="wordle-input" maxlength="20" placeholder="TYPE GUESS…" autocomplete="off"/>
+    <button class="btn" onclick="wordleSubmit()">ENTER</button>
+  </div>
+  <div id="wordle-keyboard"></div>
+  <div class="flex-center" style="margin-top:1.2rem">
+    <button class="btn accent2" onclick="initWordle()">NEW WORD</button>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz" class="screen">
+  <div class="section-header">
+    <h2>QUIZ MODE</h2>
+    <p>// 10 random questions per round //</p>
+  </div>
+  <div id="quiz-game">
+    <div class="quiz-meta">
+      <div>QUESTION <span id="q-num">1</span>/10</div>
+      <div>SCORE <span id="q-score">0</span></div>
+      <div>STREAK <span id="q-streak">0</span> 🔥</div>
+    </div>
+    <div class="quiz-progress"><div class="quiz-progress-bar" id="q-bar" style="width:0%"></div></div>
+    <div id="quiz-category-tag"></div>
+    <div id="quiz-question">Loading…</div>
+    <div class="quiz-options" id="quiz-options"></div>
+    <div id="quiz-explanation"></div>
+    <div class="flex-center"><button class="btn" id="quiz-next-btn" onclick="quizNext()" style="display:none">NEXT →</button></div>
+  </div>
+  <div id="quiz-end" style="display:none">
+    <div class="quiz-score-card">
+      <div class="big-score" id="final-score"></div>
+      <p id="final-msg" style="font-family:'Share Tech Mono',monospace;color:var(--text-dim);margin-bottom:1.2rem"></p>
+      <button class="btn" onclick="initQuiz()">PLAY AGAIN</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONNECT 4 -->
+<div id="connect4" class="screen">
+  <div class="section-header">
+    <h2>CONNECT 4</h2>
+    <p>// answer correctly to place your piece //</p>
+  </div>
+  <div class="c4-info">
+    <div class="c4-player p1" id="c4-p1-label">🔵 PLAYER 1 <span>0</span></div>
+    <button class="btn" onclick="initConnect4()">NEW GAME</button>
+    <div class="c4-player p2" id="c4-p2-label">PLAYER 2 <span>0</span> 🟠</div>
+  </div>
+  <div id="c4-turn-msg"></div>
+  <div id="c4-col-btns" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:2px;"></div>
+  <div id="c4-board"></div>
+  <div id="c4-question-panel">
+    <h3>⚡ ANSWER TO PLACE YOUR PIECE — COLUMN <span id="c4-col-num"></span></h3>
+    <div id="c4-q-text"></div>
+    <div class="c4-options" id="c4-options"></div>
+    <div id="c4-q-msg" class="msg" style="display:none"></div>
+  </div>
+  <div id="c4-msg" class="msg" style="display:none"></div>
+</div>
+
+<!-- HANGMAN -->
+<div id="hangman" class="screen">
+  <div class="section-header">
+    <h2>HANGMAN</h2>
+    <p>// guess the year 8 cs keyword //</p>
+  </div>
+  <div class="hangman-layout">
+    <div>
+      <svg id="hangman-svg" viewBox="0 0 160 180" xmlns="http://www.w3.org/2000/svg">
+        <line x1="20" y1="170" x2="140" y2="170" stroke="#1e3a5f" stroke-width="3"/>
+        <line x1="60" y1="170" x2="60" y2="10"  stroke="#1e3a5f" stroke-width="3"/>
+        <line x1="60" y1="10"  x2="110" y2="10"  stroke="#1e3a5f" stroke-width="3"/>
+        <line x1="110" y1="10" x2="110" y2="30"  stroke="#1e3a5f" stroke-width="3"/>
+        <circle id="hm-head" class="hm-part" cx="110" cy="45" r="15" stroke="#00d4ff" stroke-width="2.5" fill="none"/>
+        <line   id="hm-body" class="hm-part" x1="110" y1="60"  x2="110" y2="110" stroke="#00d4ff" stroke-width="2.5"/>
+        <line   id="hm-larm" class="hm-part" x1="110" y1="75"  x2="85"  y2="100" stroke="#00d4ff" stroke-width="2.5"/>
+        <line   id="hm-rarm" class="hm-part" x1="110" y1="75"  x2="135" y2="100" stroke="#00d4ff" stroke-width="2.5"/>
+        <line   id="hm-lleg" class="hm-part" x1="110" y1="110" x2="85"  y2="140" stroke="#00d4ff" stroke-width="2.5"/>
+        <line   id="hm-rleg" class="hm-part" x1="110" y1="110" x2="135" y2="140" stroke="#00d4ff" stroke-width="2.5"/>
+      </svg>
+    </div>
+    <div class="hangman-right">
+      <div id="hm-category"></div>
+      <div id="hm-hint"></div>
+      <div id="hm-word-display"></div>
+      <div id="hm-lives"></div>
+      <div id="hm-guessed"></div>
+      <div id="hm-keyboard"></div>
+      <div id="hm-msg" class="msg" style="display:none"></div>
+      <div class="flex-center" style="margin-top:0.8rem">
+        <button class="btn accent2" onclick="initHangman()">NEW WORD</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="leaderboard" class="screen">
+  <div class="section-header">
+    <h2>🏆 YOUR SCORES</h2>
+    <p>// scores from this session //</p>
+  </div>
+  <div style="max-width:500px;margin:0 auto;">
+    <div id="lb-list"></div>
+    <div style="text-align:center;margin-top:1.2rem;">
+      <button class="btn accent2" onclick="if(confirm('Clear all scores?')){store.set('ks3_y8_scores','[]');renderLeaderboard();}">🗑 CLEAR</button>
+    </div>
+    <div style="margin-top:2rem;padding:1rem;background:var(--surface2);border:1px dashed var(--border);text-align:center;">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:.72rem;color:var(--text-dim);line-height:1.8;">
+        📡 Scores are sent to the teacher dashboard automatically<br>
+        Ask your teacher to show the class leaderboard!
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>CORBY BUSINESS ACADEMY — COMPUTER SCIENCE DEPARTMENT // KS3 YEAR 8 REVISION</footer>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// KS3 YEAR 8 — KEYWORD DATABASE
+// Topics: Binary/Hex, HTML, Networking, Algorithms, Cyber Security
+// ═══════════════════════════════════════════════════════════════
+const KEYWORDS = [
+  { word:"BINARY",     hint:"A number system using only 0s and 1s — base 2", category:"Binary/Hex" },
+  { word:"HEX",        hint:"Hexadecimal — a base 16 number system using 0-9 and A-F", category:"Binary/Hex" },
+  { word:"DECIMAL",    hint:"The normal base 10 number system we use every day", category:"Binary/Hex" },
+  { word:"NIBBLE",     hint:"A group of 4 bits — half a byte", category:"Binary/Hex" },
+  { word:"BYTE",       hint:"A group of 8 bits", category:"Binary/Hex" },
+  { word:"ASCII",      hint:"A code that maps characters to numbers for computers", category:"Binary/Hex" },
+  { word:"OVERFLOW",   hint:"When a number is too large to store in the available bits", category:"Binary/Hex" },
+  { word:"HTML",       hint:"The language used to structure web pages", category:"HTML" },
+  { word:"TAG",        hint:"An HTML instruction surrounded by angle brackets", category:"HTML" },
+  { word:"ELEMENT",    hint:"A complete HTML unit — opening tag, content, closing tag", category:"HTML" },
+  { word:"ATTRIBUTE",  hint:"Extra information added inside an HTML opening tag", category:"HTML" },
+  { word:"ANCHOR",     hint:"The HTML tag that creates a hyperlink — uses letter a", category:"HTML" },
+  { word:"HEADING",    hint:"An HTML tag for titles — h1 is the largest, h6 the smallest", category:"HTML" },
+  { word:"STYLESHEET", hint:"A CSS file that controls how a web page looks", category:"HTML" },
+  { word:"BROWSER",    hint:"Software used to view web pages, e.g. Chrome or Firefox", category:"HTML" },
+  { word:"HYPERLINK",  hint:"A clickable link that takes you to another page", category:"HTML" },
+  { word:"NETWORK",    hint:"Two or more computers connected to share data", category:"Networks" },
+  { word:"ROUTER",     hint:"A device that directs data between different networks", category:"Networks" },
+  { word:"PACKET",     hint:"A small chunk of data sent across a network", category:"Networks" },
+  { word:"PROTOCOL",   hint:"A set of rules computers follow to communicate", category:"Networks" },
+  { word:"HTTP",       hint:"The protocol used to transfer web pages between server and browser", category:"Networks" },
+  { word:"SERVER",     hint:"A computer that stores and shares websites or files", category:"Networks" },
+  { word:"FIREWALL",   hint:"A security system that monitors and filters network traffic", category:"Security" },
+  { word:"PHISHING",   hint:"A trick email or website designed to steal your information", category:"Security" },
+  { word:"MALWARE",    hint:"Software designed to damage or gain unauthorised access", category:"Security" },
+  { word:"ENCRYPTION", hint:"Scrambling data so only authorised people can read it", category:"Security" },
+  { word:"BACKUP",     hint:"A copy of data kept safe in case the original is lost", category:"Security" },
+  { word:"PASSWORD",   hint:"A secret string of characters used to verify identity", category:"Security" },
+  { word:"ALGORITHM",  hint:"A step-by-step set of instructions to solve a problem", category:"Algorithms" },
+  { word:"VARIABLE",   hint:"A named container that stores a value in a program", category:"Algorithms" },
+  { word:"BOOLEAN",    hint:"A True or False value", category:"Algorithms" },
+  { word:"SORT",       hint:"Arranging data into order, e.g. bubble sort or merge sort", category:"Algorithms" },
+  { word:"TRACE",      hint:"Manually following an algorithm step by step to check it", category:"Algorithms" },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// KS3 YEAR 7 — QUIZ QUESTION BANK (60+ questions)
+// ═══════════════════════════════════════════════════════════════
+const QUIZ_QUESTIONS = [
+  // ── BINARY & HEX ──
+  { q:"What base number system is hexadecimal?", opts:["Base 2","Base 8","Base 16","Base 10"], ans:2, cat:"Binary/Hex", exp:"Hexadecimal is base 16 — it uses digits 0-9 then A-F for values 10-15." },
+  { q:"What is hex digit A in decimal?", opts:["9","11","10","12"], ans:2, cat:"Binary/Hex", exp:"A=10, B=11, C=12, D=13, E=14, F=15 in hexadecimal." },
+  { q:"What is hex digit F in decimal?", opts:["14","16","13","15"], ans:3, cat:"Binary/Hex", exp:"F is the highest single hex digit, equal to 15 in decimal." },
+  { q:"What is hex C in decimal?", opts:["10","11","13","12"], ans:3, cat:"Binary/Hex", exp:"Hex C = 12. Remember A=10, B=11, C=12, D=13, E=14, F=15." },
+  { q:"Convert hex 1A to decimal.", opts:["26","28","24","30"], ans:0, cat:"Binary/Hex", exp:"1A = (1x16) + 10 = 16 + 10 = 26." },
+  { q:"Convert hex 2F to decimal.", opts:["45","48","47","43"], ans:2, cat:"Binary/Hex", exp:"2F = (2x16) + 15 = 32 + 15 = 47." },
+  { q:"What is decimal 255 in hex?", opts:["EE","FE","FF","EF"], ans:2, cat:"Binary/Hex", exp:"255 = (15x16) + 15 = FF in hexadecimal." },
+  { q:"Why is hex useful in computing?", opts:["Computers run on hex","It is faster","It uses fewer transistors","Each hex digit represents exactly 4 binary bits"], ans:3, cat:"Binary/Hex", exp:"Each hex digit maps to exactly 4 bits, making it a compact shorthand for binary." },
+  { q:"How many hex digits represent one byte?", opts:["4","8","1","2"], ans:3, cat:"Binary/Hex", exp:"One byte = 8 bits = 2 hex digits. For example 11111111 = FF." },
+  { q:"What is the decimal value of binary 1010?", opts:["8","12","10","6"], ans:2, cat:"Binary/Hex", exp:"1010 = 8+0+2+0 = 10 in decimal." },
+  { q:"What is the decimal value of binary 1111?", opts:["14","16","13","15"], ans:3, cat:"Binary/Hex", exp:"1111 = 8+4+2+1 = 15 in decimal." },
+  { q:"What is binary 1100 in decimal?", opts:["10","14","12","8"], ans:2, cat:"Binary/Hex", exp:"1100 = 8+4+0+0 = 12 in decimal." },
+  { q:"What is decimal 13 in binary?", opts:["1011","1110","1101","1010"], ans:2, cat:"Binary/Hex", exp:"13 = 8+4+1 = 1101 in binary." },
+  { q:"What is an overflow error?", opts:["A program crashes on purpose","A number too large to store in the available bits","A loop runs too long","A file is corrupted"], ans:1, cat:"Binary/Hex", exp:"Overflow occurs when a result exceeds the maximum value that can be stored in the given bits." },
+  { q:"Convert binary 10101010 to hex.", opts:["BB","A0","AB","AA"], ans:3, cat:"Binary/Hex", exp:"Split into nibbles: 1010=A, 1010=A. So 10101010 = AA in hex." },
+  { q:"What is binary 11111111 in decimal?", opts:["254","256","255","253"], ans:2, cat:"Binary/Hex", exp:"11111111 = 128+64+32+16+8+4+2+1 = 255." },
+  { q:"What is the decimal value of hex 3C?", opts:["54","62","58","60"], ans:3, cat:"Binary/Hex", exp:"3C = (3x16) + 12 = 48 + 12 = 60." },
+  { q:"What is decimal 16 in binary?", opts:["00100000","00001111","00010001","00010000"], ans:3, cat:"Binary/Hex", exp:"16 = 00010000 in 8-bit binary." },
+  { q:"What is hex 10 in decimal?", opts:["10","15","17","16"], ans:3, cat:"Binary/Hex", exp:"Hex 10 = (1x16) + 0 = 16 in decimal." },
+  { q:"What does ASCII do?", opts:["Compresses files","Maps characters to binary numbers","Encrypts data","Speeds up networks"], ans:1, cat:"Binary/Hex", exp:"ASCII assigns a unique binary number to each character, letting computers store text." },
+  // ── HTML ──
+  { q:"What does HTML stand for?", opts:["Hyper Text Markup Language","High Text Machine Language","Hyper Transfer Markup Link","Home Tool Markup Language"], ans:0, cat:"HTML", exp:"HTML (HyperText Markup Language) is the standard language for creating web pages." },
+  { q:"Which tag creates the largest heading?", opts:["<h6>","<heading>","<h1>","<header>"], ans:2, cat:"HTML", exp:"<h1> is the largest heading. <h6> is the smallest. Use them in order." },
+  { q:"Which HTML tag creates a paragraph?", opts:["<para>","<text>","<p>","<pg>"], ans:2, cat:"HTML", exp:"<p> creates a paragraph. It needs an opening and a closing </p> tag." },
+  { q:"What does a closing HTML tag look like?", opts:["<tag>","<tag/>","<<tag>>","</tag>"], ans:3, cat:"HTML", exp:"Closing tags have a forward slash before the tag name, like </p> or </h1>." },
+  { q:"Which tag creates a hyperlink?", opts:["<link>","<a>","<url>","<href>"], ans:1, cat:"HTML", exp:"The <a> (anchor) tag creates hyperlinks. The href attribute sets the destination URL." },
+  { q:"Which attribute of the a tag sets the link destination?", opts:["src","url","link","href"], ans:3, cat:"HTML", exp:"The href attribute holds the URL. Example: <a href='https://bbc.co.uk'>BBC</a>." },
+  { q:"Which tag embeds an image?", opts:["<picture>","<image>","<photo>","<img>"], ans:3, cat:"HTML", exp:"The <img> tag embeds images. The src attribute points to the image file." },
+  { q:"What does the alt attribute on an image do?", opts:["Sets the image size","Links to another page","Sets image colour","Provides alternative text if image cannot load"], ans:3, cat:"HTML", exp:"The alt attribute describes the image for screen readers and when images fail to load." },
+  { q:"What is the correct outer structure of an HTML page?", opts:["<html><title><body>","<head><html><body>","<html><head><body>","<body><html><head>"], ans:2, cat:"HTML", exp:"An HTML page: <!DOCTYPE html>, then <html>, inside that <head> and <body>." },
+  { q:"What tag in the head sets the page title?", opts:["<header>","<heading>","<h1>","<title>"], ans:3, cat:"HTML", exp:"The <title> tag sets the text shown in the browser tab. It goes inside <head>." },
+  { q:"Which tag creates an unordered bullet list?", opts:["<ol>","<bl>","<list>","<ul>"], ans:3, cat:"HTML", exp:"<ul> creates bullet points. <ol> creates numbered lists. Items use <li>." },
+  { q:"What does CSS stand for?", opts:["Computer Style Sheets","Creative Style System","Cascading Style Sheets","Coded Style Syntax"], ans:2, cat:"HTML", exp:"CSS (Cascading Style Sheets) controls appearance — colours, fonts, layout." },
+  { q:"What does the br tag do?", opts:["Creates a bullet","Adds a line break","Makes text bold","Creates a border"], ans:1, cat:"HTML", exp:"<br> inserts a line break without starting a new paragraph. It is self-closing." },
+  { q:"What does DOCTYPE html do at the top of a page?", opts:["Adds a title","Links a stylesheet","Creates the header","Tells the browser it is an HTML5 document"], ans:3, cat:"HTML", exp:"<!DOCTYPE html> tells the browser which version of HTML is being used." },
+  { q:"How do you write a comment in HTML?", opts:["// comment","# comment","<!-- comment -->","/* comment */"], ans:2, cat:"HTML", exp:"HTML comments use <!-- and -->. They are invisible in the browser." },
+  { q:"Which tag creates a numbered list?", opts:["<ul>","<list>","<nl>","<ol>"], ans:3, cat:"HTML", exp:"<ol> creates an ordered numbered list. Items use <li>." },
+  { q:"What attribute sets the image source file?", opts:["href","alt","link","src"], ans:3, cat:"HTML", exp:"The src attribute holds the image path. Example: <img src='cat.jpg'>." },
+  { q:"Which tag makes text italic in HTML?", opts:["<italic>","<i> or <em>","<bold>","<b>"], ans:1, cat:"HTML", exp:"<i> and <em> both produce italic text. <em> also adds emphasis meaning." },
+  { q:"Where does the CSS stylesheet link tag go in HTML?", opts:["In the body","At the end","In a paragraph","In the head section"], ans:3, cat:"HTML", exp:"The <link rel='stylesheet'> tag goes inside the <head> section of the HTML page." },
+  // ── NETWORKS ──
+  { q:"What does HTTP stand for?", opts:["HyperText Transfer Protocol","High Traffic Transfer Process","Host Transfer Protocol","HyperText Translation Program"], ans:0, cat:"Networks", exp:"HTTP (HyperText Transfer Protocol) is the set of rules for transferring web pages." },
+  { q:"What does HTTPS add to HTTP?", opts:["Faster transfer","Encryption for security","Larger files","Video streaming"], ans:1, cat:"Networks", exp:"HTTPS uses SSL/TLS encryption to secure data between browser and server." },
+  { q:"What is an IP address?", opts:["A file on a server","A type of protocol","Connection speed","A unique number that identifies a device on a network"], ans:3, cat:"Networks", exp:"Every device has a unique IP address used to route data to the right place." },
+  { q:"What does DNS do?", opts:["Speeds up downloads","Stores website files","Encrypts traffic","Translates domain names to IP addresses"], ans:3, cat:"Networks", exp:"DNS (Domain Name System) converts domain names like www.bbc.co.uk into IP addresses." },
+  { q:"What is a LAN?", opts:["Large Area Network","Local Access Node","Linked Area Node","Local Area Network"], ans:3, cat:"Networks", exp:"A LAN (Local Area Network) connects devices in a small area like a school." },
+  { q:"What is a WAN?", opts:["Wireless Access Network","Web Application Node","Wired Area Network","Wide Area Network"], ans:3, cat:"Networks", exp:"A WAN (Wide Area Network) covers a large geographic area. The internet is the world's biggest WAN." },
+  { q:"What does a router do?", opts:["Stores files","Displays web pages","Converts signals","Directs data packets between networks"], ans:3, cat:"Networks", exp:"A router forwards data packets between networks, choosing the best path." },
+  { q:"What is a network packet?", opts:["A downloaded file","A type of virus","A wireless signal","A small chunk of data sent across a network"], ans:3, cat:"Networks", exp:"Data is broken into packets for transmission and reassembled at the destination." },
+  { q:"Which topology connects all devices to a central switch?", opts:["Ring","Mesh","Bus","Star"], ans:3, cat:"Networks", exp:"In a star topology all devices connect to a central switch." },
+  { q:"What does bandwidth mean?", opts:["Cable length","Number of devices","IP range","Maximum rate of data transfer per second"], ans:3, cat:"Networks", exp:"Bandwidth measures how much data can be transferred per second, usually in Mbps or Gbps." },
+  // ── CYBER SECURITY ──
+  { q:"What is phishing?", opts:["Scanning for open ports","Flooding a server","Installing software","Tricking users into revealing personal data via fake emails or sites"], ans:3, cat:"Security", exp:"Phishing uses fake emails or websites to steal passwords and personal information." },
+  { q:"What is malware?", opts:["A network cable","A programming language","A database tool","Software designed to damage or gain unauthorised access to a computer"], ans:3, cat:"Security", exp:"Malware includes viruses, worms, ransomware and spyware." },
+  { q:"What does a firewall do?", opts:["Stores passwords","Speeds up connection","Assigns IP addresses","Monitors and filters network traffic based on security rules"], ans:3, cat:"Security", exp:"A firewall monitors incoming and outgoing traffic and blocks suspicious connections." },
+  { q:"What is encryption?", opts:["Making a backup","Deleting data","Compressing a file","Scrambling data so only authorised users can read it"], ans:3, cat:"Security", exp:"Encryption scrambles data into unreadable code — only the key holder can decrypt it." },
+  { q:"What makes a strong password?", opts:["Your name and birthday","A short memorable word","The same word used everywhere","A mix of uppercase, lowercase, numbers and symbols"], ans:3, cat:"Security", exp:"Strong passwords use mixed character types, are long and unique to each account." },
+  { q:"What is a computer virus?", opts:["A hardware fault","A network error","A type of firewall","Malicious code that replicates itself and spreads to other programs"], ans:3, cat:"Security", exp:"A virus attaches to legitimate programs and spreads when those programs are executed." },
+  { q:"What is two-factor authentication (2FA)?", opts:["Two passwords","Logging in twice","Two user accounts","Verifying identity using two separate methods"], ans:3, cat:"Security", exp:"2FA requires two forms of verification — e.g. a password plus a code sent to your phone." },
+  { q:"What is a backup?", opts:["Deleting old files","An antivirus scan","A type of network cable","A copy of data kept safe in case the original is lost or damaged"], ans:3, cat:"Security", exp:"Regular backups protect against data loss from hardware failure, ransomware or accidents." },
+  { q:"Which of these is NOT malware?", opts:["Ransomware","Spyware","Trojan horse","Firewall"], ans:3, cat:"Security", exp:"A firewall is a security tool that defends against malware — it is not malware itself." },
+  { q:"What is a brute force attack?", opts:["Breaking into a server room","Sending thousands of emails","Installing a keylogger","Systematically trying every possible password until one works"], ans:3, cat:"Security", exp:"A brute force attack tries every possible combination of characters to crack a password." },
+  // ── ALGORITHMS ──
+  { q:"What is an algorithm?", opts:["A type of computer","A programming language","A storage device","A step-by-step set of instructions to solve a problem"], ans:3, cat:"Algorithms", exp:"An algorithm is a precise set of steps that solves a specific problem." },
+  { q:"What is a trace table used for?", opts:["Drawing flowcharts","Storing data","Connecting to a network","Manually tracking variable values through an algorithm to find bugs"], ans:3, cat:"Algorithms", exp:"A trace table records variable values at each step, helping identify errors." },
+  { q:"What does iteration mean?", opts:["An error","Running once","Storing a value","Repeating a block of code"], ans:3, cat:"Algorithms", exp:"Iteration means looping — repeating code either a fixed number of times or while a condition holds." },
+  { q:"What shape represents a decision in a flowchart?", opts:["Rectangle","Oval","Triangle","Diamond"], ans:3, cat:"Algorithms", exp:"A diamond shape represents a decision point with two exits: Yes and No." },
+  { q:"How does bubble sort work?", opts:["Splits data in half","Starts from the middle","Uses a hash table","Repeatedly compares and swaps adjacent pairs until sorted"], ans:3, cat:"Algorithms", exp:"Bubble sort repeatedly compares neighbouring elements and swaps them if out of order." },
+  { q:"How does binary search work?", opts:["Checks every item in order","Only works on unsorted data","Converts to binary first","Halves the search space each step by checking the middle element"], ans:3, cat:"Algorithms", exp:"Binary search works on sorted data — it checks the middle element and eliminates half each time." },
+  { q:"What is linear search?", opts:["Always starts in the middle","Requires sorted data","Uses a hash function","Checks each item one by one from the start"], ans:3, cat:"Algorithms", exp:"Linear search goes through every item in order — simple but slow for large lists." },
+  { q:"Which search is faster on large sorted datasets?", opts:["Linear search","Random search","Binary search","Bubble sort"], ans:2, cat:"Algorithms", exp:"Binary search is far faster — halving the search area each step makes it very efficient." },
+];
+
+// Fisher-Yates shuffle
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+
+// ═══════════════════════════════════════════════════════════
+// THEME & FILTER
+// ═══════════════════════════════════════════════════════════
+const store = { get(k){try{return localStorage.getItem(k);}catch(e){return null;}}, set(k,v){try{localStorage.setItem(k,v);}catch(e){}} };
+const GS_URL = 'PASTE_APPS_SCRIPT_URL_HERE';
+let playerName = '';
+let currentFilter = store.get('ks3_y8_filter') || 'none';
+let isLight       = store.get('ks3_y8_light') === '1';
+
+function applyAll() {
+  document.body.classList.toggle('light', isLight);
+  document.getElementById('btn-light').classList.toggle('active-light', isLight);
+  document.body.classList.remove('filter-blue','filter-green');
+  document.getElementById('btn-blue').classList.remove('active-blue');
+  document.getElementById('btn-green').classList.remove('active-green');
+  if (currentFilter==='blue')  { document.body.classList.add('filter-blue');  document.getElementById('btn-blue').classList.add('active-blue'); }
+  if (currentFilter==='green') { document.body.classList.add('filter-green'); document.getElementById('btn-green').classList.add('active-green'); }
+}
+function toggleLight() {
+  isLight = !isLight;
+  store.set('ks3_y8_light', isLight?'1':'0');
+  applyAll();
+}
+function toggleFilter(f) {
+  currentFilter = currentFilter===f ? 'none' : f;
+  store.set('ks3_y8_filter', currentFilter);
+  applyAll();
+}
+applyAll();
+
+// ═══════════════════════════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+// SCORE TRACKING
+// ═══════════════════════════════════════════════════════════
+function saveScore(entry) {
+  entry.ts = Date.now();
+  // Store in localStorage
+  const all = JSON.parse(store.get('ks3_y8_scores') || '[]');
+  all.push(entry);
+  store.set('ks3_y8_scores', JSON.stringify(all));
+  // Send to Google Sheets via script tag (works from GitHub Pages & local files)
+  if (GS_URL && GS_URL !== 'PASTE_APPS_SCRIPT_URL_HERE') {
+    const p = new URLSearchParams({ action:'addScore', name:entry.name||'Anonymous',
+      game:entry.game||'', score:entry.score||0, detail:entry.detail||'',
+      date:new Date().toLocaleString('en-GB') });
+    try {
+      const s = document.createElement('script');
+      s.src = GS_URL + '?' + p.toString();
+      s.onload = s.onerror = () => { if(s.parentNode) s.parentNode.removeChild(s); };
+      document.head.appendChild(s);
+    } catch(e) {}
+  }
+  renderLeaderboard();
+}
+
+function renderLeaderboard() {
+  const el = document.getElementById('lb-list');
+  if (!el) return;
+  const all = JSON.parse(store.get('ks3_y8_scores') || '[]');
+  if (!all.length) {
+    el.innerHTML = '<div style="text-align:center;padding:1.5rem;color:var(--text-dim);font-family:Share Tech Mono,monospace;font-size:.8rem;">Play some games to see your score here!</div>';
+    return;
+  }
+  // Show this session's scores (last 20)
+  const recent = [...all].reverse().slice(0, 20);
+  el.innerHTML = recent.map((e,i) =>
+    `<div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .8rem;margin-bottom:3px;background:var(--surface2);border:1px solid var(--border);">
+      <div>
+        <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--accent);">${e.game}</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:.65rem;color:var(--text-dim);">${e.detail}</div>
+      </div>
+      <div style="font-family:'Orbitron',monospace;font-size:1rem;font-weight:700;color:var(--yellow);">${e.score}</div>
+    </div>`
+  ).join('');
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const map={home:'HOME',wordle:'WORDLE',quiz:'QUIZ',connect4:'CONNECT 4',hangman:'HANGMAN'};
+  document.querySelectorAll('.nav-btn').forEach(b=>{if(b.textContent.trim()===map[id])b.classList.add('active');});
+}
+
+// ═══════════════════════════════════════════════════════════
+// WORDLE
+// ═══════════════════════════════════════════════════════════
+let wState = {};
+function initWordle() {
+  const pool = shuffle(KEYWORDS);
+  const kw   = pool[0];
+  wState = { word:kw.word.toUpperCase(), hint:kw.hint, category:kw.category, maxRows:6, curRow:0, done:false };
+  document.getElementById('wordle-category').textContent = '[ '+kw.category+' ]';
+  document.getElementById('wordle-hint').textContent = '💡 '+kw.hint;
+  document.getElementById('wordle-input').value = '';
+  document.getElementById('wordle-msg').textContent = '';
+  document.getElementById('wordle-msg').className = 'msg';
+  buildWordleGrid(); buildWordleKeyboard();
+  document.getElementById('wordle-input').focus();
+}
+
+function buildWordleGrid() {
+  const len=wState.word.length, grid=document.getElementById('wordle-grid');
+  grid.innerHTML='';
+  for(let r=0;r<wState.maxRows;r++){
+    const row=document.createElement('div'); row.className='wordle-row'; row.id='wr-'+r;
+    for(let c=0;c<len;c++){const cell=document.createElement('div');cell.className='wordle-cell';cell.id=`wc-${r}-${c}`;row.appendChild(cell);}
+    grid.appendChild(row);
+  }
+}
+
+function buildWordleKeyboard() {
+  const kb=document.getElementById('wordle-keyboard'); kb.innerHTML='';
+  [['Q','W','E','R','T','Y','U','I','O','P'],['A','S','D','F','G','H','J','K','L'],['ENTER','Z','X','C','V','B','N','M','⌫']].forEach(r=>{
+    const row=document.createElement('div'); row.className='kb-row';
+    r.forEach(k=>{ const btn=document.createElement('button'); btn.className='kb-key'+(k.length>1?' wide':''); btn.textContent=k; btn.dataset.key=k;
+      btn.onclick=()=>{if(k==='ENTER')wordleSubmit();else if(k==='⌫')wordleBackspace();else wordleType(k);};
+      row.appendChild(btn); });
+    kb.appendChild(row);
+  });
+}
+
+function wordleType(k)      { if(wState.done)return; const inp=document.getElementById('wordle-input'); if(inp.value.length<wState.word.length)inp.value+=k; }
+function wordleBackspace()  { const inp=document.getElementById('wordle-input'); inp.value=inp.value.slice(0,-1); }
+
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('wordle').classList.contains('active'))return;
+  const inp=document.getElementById('wordle-input');
+  if(document.activeElement!==inp){
+    if(e.key==='Enter')wordleSubmit();
+    else if(e.key==='Backspace')wordleBackspace();
+    else if(/^[a-zA-Z]$/.test(e.key))wordleType(e.key.toUpperCase());
+  }
+});
+
+function wordleSubmit() {
+  if(wState.done)return;
+  const inp=document.getElementById('wordle-input');
+  const guess=inp.value.toUpperCase().trim();
+  if(guess.length!==wState.word.length){ setMsg('wordle-msg',`Need ${wState.word.length} letters!`,'wrong'); const row=document.getElementById('wr-'+wState.curRow); row.classList.add('shake'); setTimeout(()=>row.classList.remove('shake'),400); return; }
+  const result=scoreGuess(guess,wState.word);
+  revealRow(wState.curRow,guess,result);
+  updateWordleKeys(guess,result);
+  inp.value='';
+  if(guess===wState.word){ wState.done=true; saveScore({name:playerName||'Player',game:'Wordle',score:100*(wState.maxRows-wState.curRow),detail:`Word: ${wState.word} in ${wState.curRow+1} guesses`}); setTimeout(()=>setMsg('wordle-msg','✅ Correct! The word was '+wState.word,'correct'),700); }
+  else { wState.curRow++; if(wState.curRow>=wState.maxRows){ wState.done=true; setTimeout(()=>setMsg('wordle-msg','❌ Out of guesses! Word was: '+wState.word,'wrong'),700); } }
+}
+
+function scoreGuess(guess,word) {
+  const res=Array(word.length).fill('absent'),wArr=word.split(''),gArr=guess.split(''),usedW=Array(word.length).fill(false),usedG=Array(guess.length).fill(false);
+  gArr.forEach((c,i)=>{if(c===wArr[i]){res[i]='correct';usedW[i]=usedG[i]=true;}});
+  gArr.forEach((c,i)=>{if(usedG[i])return;for(let j=0;j<wArr.length;j++){if(!usedW[j]&&wArr[j]===c){res[i]='present';usedW[j]=usedG[i]=true;break;}}});
+  return res;
+}
+
+function revealRow(rowIdx,guess,result) {
+  result.forEach((r,i)=>{setTimeout(()=>{const cell=document.getElementById(`wc-${rowIdx}-${i}`);cell.textContent=guess[i];cell.classList.add('flip');setTimeout(()=>{cell.classList.remove('flip','filled');cell.classList.add(r);},200);},i*100);});
+}
+
+function updateWordleKeys(guess,result) {
+  const p={correct:3,present:2,absent:1};
+  guess.split('').forEach((c,i)=>{const btn=document.querySelector(`[data-key="${c}"]`);if(!btn)return;const cur=p[btn.className.split(' ').find(x=>['correct','present','absent'].includes(x))]||0;if((p[result[i]]||0)>cur){btn.classList.remove('correct','present','absent');btn.classList.add(result[i]);}});
+}
+
+// ═══════════════════════════════════════════════════════════
+// QUIZ
+// ═══════════════════════════════════════════════════════════
+let qState = {};
+function initQuiz() {
+  const shuffled = shuffle(QUIZ_QUESTIONS).slice(0,10);
+  qState = { questions:shuffled, cur:0, score:0, streak:0, answered:false };
+  document.getElementById('quiz-game').style.display='block';
+  document.getElementById('quiz-end').style.display='none';
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q=qState.questions[qState.cur];
+  document.getElementById('q-num').textContent=qState.cur+1;
+  document.getElementById('q-score').textContent=qState.score;
+  document.getElementById('q-streak').textContent=qState.streak;
+  document.getElementById('q-bar').style.width=((qState.cur/10)*100)+'%';
+  document.getElementById('quiz-category-tag').textContent='[ '+q.cat+' ]';
+  document.getElementById('quiz-question').textContent=q.q;
+  const opts=document.getElementById('quiz-options'); opts.innerHTML='';
+  q.opts.forEach((o,i)=>{
+    const btn=document.createElement('button'); btn.className='quiz-opt';
+    btn.textContent=String.fromCharCode(65+i)+'. '+o;
+    btn.onclick=()=>quizAnswer(i,q.ans,q);
+    opts.appendChild(btn);
+  });
+  document.getElementById('quiz-explanation').style.display='none';
+  document.getElementById('quiz-next-btn').style.display='none';
+  qState.answered=false;
+}
+
+function quizAnswer(idx,ans,q) {
+  if(qState.answered)return;
+  qState.answered=true;
+  const btns=document.querySelectorAll('.quiz-opt');
+  btns.forEach(b=>b.disabled=true);
+  btns[ans].classList.add('correct-ans');
+  if(idx===ans){ qState.score++; qState.streak++; }
+  else { btns[idx].classList.add('wrong-ans'); qState.streak=0; }
+  document.getElementById('q-score').textContent=qState.score;
+  document.getElementById('q-streak').textContent=qState.streak;
+  const exp=document.getElementById('quiz-explanation'); exp.textContent='💡 '+q.exp; exp.style.display='block';
+  document.getElementById('quiz-next-btn').style.display='block';
+}
+
+function quizNext() {
+  qState.cur++;
+  if(qState.cur>=qState.questions.length) showQuizEnd(); else renderQuestion();
+}
+
+function showQuizEnd() {
+  document.getElementById('quiz-game').style.display='none';
+  document.getElementById('quiz-end').style.display='block';
+  const pct=(qState.score/10)*100;
+  document.getElementById('final-score').textContent=qState.score+'/10';
+  saveScore({ name:playerName||'Player', game:'Quiz', score:qState.score*10, detail:`${qState.score}/10 questions correct` });
+  document.getElementById('final-msg').textContent=
+    pct===100?'🏆 PERFECT SCORE! Brilliant!':pct>=80?'🌟 Excellent work!':pct>=60?'✅ Good effort — keep going!':pct>=40?'📚 Getting there — review your notes!':'💪 Keep practising — you\'ll get better!';
+}
+
+// ═══════════════════════════════════════════════════════════
+// CONNECT 4
+// ═══════════════════════════════════════════════════════════
+let c4State = {};
+function initConnect4() {
+  c4State = { board:Array(6).fill(null).map(()=>Array(7).fill(0)), turn:1, scores:[0,0,0], done:false, pendingCol:-1, shuffledQ:shuffle(QUIZ_QUESTIONS), qIdx:0 };
+  document.getElementById('c4-question-panel').style.display='none';
+  document.getElementById('c4-msg').style.display='none';
+  renderC4Board(); updateC4UI();
+}
+
+function renderC4Board() {
+  const board=document.getElementById('c4-board'),colBtns=document.getElementById('c4-col-btns');
+  board.innerHTML=''; colBtns.innerHTML='';
+  for(let c=0;c<7;c++){ const btn=document.createElement('button'); btn.className='c4-col-btn'; btn.textContent='▼'; btn.dataset.col=c; btn.onclick=()=>c4ColumnClick(c); colBtns.appendChild(btn); }
+  for(let r=0;r<6;r++) for(let c=0;c<7;c++){ const cell=document.createElement('div'); cell.className='c4-cell'; cell.id=`c4-${r}-${c}`; const v=c4State.board[r][c]; if(v===1)cell.classList.add('p1'); if(v===2)cell.classList.add('p2'); board.appendChild(cell); }
+}
+
+function updateC4UI() {
+  const p1=document.getElementById('c4-p1-label'),p2=document.getElementById('c4-p2-label');
+  p1.className='c4-player p1'+(c4State.turn===1?' active-player':'');
+  p2.className='c4-player p2'+(c4State.turn===2?' active-player':'');
+  p1.innerHTML=`🔵 PLAYER 1 <span>${c4State.scores[1]}</span>`;
+  p2.innerHTML=`PLAYER 2 <span>${c4State.scores[2]}</span> 🟠`;
+  document.getElementById('c4-turn-msg').textContent=c4State.done?'':`${c4State.turn===1?'🔵 PLAYER 1':'🟠 PLAYER 2'}'s turn — click a column!`;
+}
+
+function c4ColumnClick(col) {
+  if(c4State.done||c4State.pendingCol>=0)return;
+  if(c4State.board[0][col]!==0){ const m=document.getElementById('c4-msg'); m.style.display='block'; m.className='msg wrong'; m.textContent='⚠ That column is full!'; setTimeout(()=>m.style.display='none',1800); return; }
+  c4State.pendingCol=col; showC4Question(col);
+}
+
+function showC4Question(col) {
+  const q=c4State.shuffledQ[c4State.qIdx%c4State.shuffledQ.length]; c4State.qIdx++;
+  document.getElementById('c4-col-num').textContent=col+1;
+  document.getElementById('c4-q-text').textContent=q.q;
+  const opts=document.getElementById('c4-options'); opts.innerHTML='';
+  q.opts.forEach((o,i)=>{
+    const btn=document.createElement('button'); btn.className='c4-opt';
+    btn.textContent=String.fromCharCode(65+i)+'. '+o;
+    btn.onclick=()=>c4Answer(i,q.ans,q);
+    opts.appendChild(btn);
+  });
+  document.getElementById('c4-q-msg').style.display='none';
+  document.getElementById('c4-question-panel').style.display='block';
+}
+
+function c4Answer(idx,ans,q) {
+  document.querySelectorAll('.c4-opt').forEach(b=>b.disabled=true);
+  const msg=document.getElementById('c4-q-msg'); msg.style.display='block';
+  if(idx===ans){
+    document.querySelectorAll('.c4-opt')[ans].classList.add('correct-ans');
+    msg.className='msg correct'; msg.textContent='✅ Correct! Placing piece…';
+    setTimeout(()=>{ placeC4Piece(); document.getElementById('c4-question-panel').style.display='none'; c4State.pendingCol=-1; },900);
+  } else {
+    document.querySelectorAll('.c4-opt')[ans].classList.add('correct-ans');
+    document.querySelectorAll('.c4-opt')[idx].classList.add('wrong-ans');
+    msg.className='msg wrong'; msg.textContent=`❌ Wrong! Answer: ${q.opts[q.ans]}. Turn lost.`;
+    setTimeout(()=>{ document.getElementById('c4-question-panel').style.display='none'; c4State.pendingCol=-1; c4State.turn=c4State.turn===1?2:1; updateC4UI(); },1800);
+  }
+}
+
+function placeC4Piece() {
+  const col=c4State.pendingCol; let row=-1;
+  for(let r=5;r>=0;r--){if(c4State.board[r][col]===0){row=r;break;}}
+  if(row===-1)return;
+  c4State.board[row][col]=c4State.turn;
+  document.getElementById(`c4-${row}-${col}`).classList.add(c4State.turn===1?'p1':'p2');
+  const winner=checkC4Win();
+  if(winner){ c4State.done=true; c4State.scores[winner]++; updateC4UI(); const m=document.getElementById('c4-msg'); m.style.display='block'; m.className='msg correct'; m.textContent=`🏆 PLAYER ${winner} WINS! (P1: ${c4State.scores[1]}, P2: ${c4State.scores[2]})`; document.querySelectorAll('.c4-col-btn').forEach(b=>b.disabled=true); return; }
+  if(c4State.board[0].every(v=>v!==0)){ c4State.done=true; const m=document.getElementById('c4-msg'); m.style.display='block'; m.className='msg info'; m.textContent="🤝 It's a draw!"; return; }
+  c4State.turn=c4State.turn===1?2:1; updateC4UI();
+}
+
+function checkC4Win() {
+  const b=c4State.board;
+  for(let r=0;r<6;r++) for(let c=0;c<7;c++){
+    if(!b[r][c])continue; const p=b[r][c];
+    for(const[dr,dc] of [[0,1],[1,0],[1,1],[1,-1]]){
+      let cells=[[r,c]],nr=r+dr,nc=c+dc;
+      while(nr>=0&&nr<6&&nc>=0&&nc<7&&b[nr][nc]===p){cells.push([nr,nc]);nr+=dr;nc+=dc;}
+      if(cells.length>=4){cells.forEach(([rr,cc])=>document.getElementById(`c4-${rr}-${cc}`).classList.add('win'));return p;}
+    }
+  }
+  return null;
+}
+
+// ═══════════════════════════════════════════════════════════
+// HANGMAN
+// ═══════════════════════════════════════════════════════════
+const HM_PARTS=['hm-head','hm-body','hm-larm','hm-rarm','hm-lleg','hm-rleg'];
+let hmState={};
+function initHangman() {
+  const pool=shuffle(KEYWORDS.filter(k=>k.word.length>=4));
+  const kw=pool[0];
+  hmState={word:kw.word.toUpperCase(),hint:kw.hint,category:kw.category,lives:6,guessed:new Set(),done:false};
+  HM_PARTS.forEach(id=>document.getElementById(id).classList.remove('show'));
+  document.getElementById('hm-category').textContent='[ '+kw.category+' ]';
+  document.getElementById('hm-hint').textContent='💡 '+kw.hint;
+  document.getElementById('hm-msg').style.display='none';
+  renderHMWord(); renderHMLives(); renderHMGuessed(); buildHMKeyboard();
+}
+
+function renderHMWord() {
+  const disp=document.getElementById('hm-word-display'); disp.innerHTML='';
+  hmState.word.split('').forEach(c=>{ const el=document.createElement('div');
+    if(c===' '){el.className='hm-letter space';}
+    else{el.className='hm-letter';el.textContent=hmState.guessed.has(c)?c:'';}
+    disp.appendChild(el);
+  });
+}
+
+function renderHMLives()   { document.getElementById('hm-lives').innerHTML=`LIVES: <span>${'❤️'.repeat(hmState.lives)}${'🖤'.repeat(6-hmState.lives)}</span>`; }
+function renderHMGuessed() { const wrong=[...hmState.guessed].filter(c=>!hmState.word.includes(c)); document.getElementById('hm-guessed').textContent=wrong.length?'Wrong guesses: '+wrong.join(' '):''; }
+
+function buildHMKeyboard() {
+  const kb=document.getElementById('hm-keyboard'); kb.innerHTML='';
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(c=>{
+    const btn=document.createElement('button'); btn.className='hm-key'; btn.textContent=c; btn.id='hmk-'+c;
+    btn.onclick=()=>hmGuess(c); kb.appendChild(btn);
+  });
+}
+
+function hmGuess(c) {
+  if(hmState.done||hmState.guessed.has(c))return;
+  hmState.guessed.add(c);
+  const btn=document.getElementById('hmk-'+c);
+  if(hmState.word.includes(c)){ btn.classList.add('hit'); }
+  else { btn.classList.add('miss'); btn.disabled=true; hmState.lives--; document.getElementById(HM_PARTS[6-hmState.lives-1]).classList.add('show'); }
+  renderHMWord(); renderHMLives(); renderHMGuessed();
+  const won=hmState.word.split('').every(ch=>ch===' '||hmState.guessed.has(ch));
+  if(won){ hmState.done=true; saveScore({name:playerName||'Player',game:'Hangman',score:hmState.lives*20+20,detail:`Word: ${hmState.word}, ${6-hmState.lives} wrong guesses`}); const m=document.getElementById('hm-msg'); m.style.display='block'; m.className='msg correct'; m.textContent=`✅ You got it! "${hmState.word}" 🎉`; document.querySelectorAll('.hm-key').forEach(b=>b.disabled=true); return; }
+  if(hmState.lives<=0){ hmState.done=true; hmState.word.split('').forEach(c=>{if(c!==' ')hmState.guessed.add(c);}); renderHMWord(); const m=document.getElementById('hm-msg'); m.style.display='block'; m.className='msg wrong'; m.textContent=`❌ Out of lives! The word was "${hmState.word}".`; document.querySelectorAll('.hm-key').forEach(b=>b.disabled=true); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════════
+function setMsg(id,text,type){ const el=document.getElementById(id); el.textContent=text; el.className='msg '+(type||''); }
+
+// ── INIT ──
+document.addEventListener("DOMContentLoaded",function(){
+  initWordle(); initQuiz(); initConnect4(); initHangman();
+});
+</script>
+</body>
+</html>

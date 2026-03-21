@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBA KS3 — Teacher Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+  :root {
+    --bg:#0a0e1a; --surface:#111827; --surface2:#1a2235; --border:#1e3a5f;
+    --accent:#00d4ff; --accent2:#ff6b35; --text:#e0f0ff; --dim:#6b8cad;
+    --green:#39ff14; --red:#ff4757; --yellow:#ffd32a; --gold:#ffd700;
+  }
+  body.light { --bg:#f0f4f8; --surface:#fff; --surface2:#e8edf5; --border:#b0c4de; --text:#0a1825; --dim:#4a6a8a; --accent:#0077a8; --accent2:#c85000; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'Exo 2',sans-serif; height:100vh; overflow:hidden; display:grid; grid-template-rows:auto 1fr auto; }
+  body::before { content:''; position:fixed; inset:0; background-image:linear-gradient(rgba(0,212,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.025) 1px,transparent 1px); background-size:52px 52px; pointer-events:none; z-index:0; }
+
+  /* ── TOPBAR ── */
+  .topbar { position:relative; z-index:10; background:var(--surface); border-bottom:2px solid var(--border); padding:.6rem 1.4rem; display:flex; align-items:center; justify-content:space-between; gap:.8rem; flex-wrap:wrap; flex-shrink:0; }
+  .topbar::after { content:''; position:absolute; bottom:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent)); }
+  .tb-logo { font-family:'Orbitron',monospace; font-size:.8rem; font-weight:900; color:var(--accent); letter-spacing:.1em; }
+  .tb-title { font-family:'Share Tech Mono',monospace; font-size:.65rem; color:var(--dim); margin-top:1px; }
+  .tb-controls { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
+  .btn { font-family:'Orbitron',monospace; font-size:.6rem; font-weight:700; letter-spacing:.08em; padding:.45rem 1rem; cursor:pointer; transition:all .18s; border:1px solid; background:transparent; text-transform:uppercase; white-space:nowrap; }
+  .btn-pri { background:var(--accent); border-color:var(--accent); color:var(--bg); }
+  .btn-pri:hover { box-shadow:0 0 18px rgba(0,212,255,.4); }
+  .btn-org { border-color:var(--accent2); color:var(--accent2); }
+  .btn-org:hover { background:var(--accent2); color:#fff; }
+  .btn-sec { border-color:var(--border); color:var(--dim); }
+  .btn-sec:hover { border-color:var(--accent); color:var(--accent); }
+  .btn-red { border-color:var(--red); color:var(--red); }
+  .btn-red:hover { background:var(--red); color:#fff; }
+  .theme-btn { font-family:'Share Tech Mono',monospace; font-size:.65rem; background:transparent; border:1px solid var(--border); color:var(--dim); cursor:pointer; padding:.28rem .6rem; transition:all .18s; }
+  .theme-btn:hover { border-color:var(--accent); color:var(--accent); }
+  .tb-clock { font-family:'Orbitron',monospace; font-size:.75rem; color:var(--accent); letter-spacing:.1em; }
+
+  /* ── MAIN GRID ── */
+  .main { display:grid; grid-template-columns:1fr 320px; overflow:hidden; position:relative; z-index:5; }
+
+  /* ── LEADERBOARD PANEL ── */
+  .lb-panel { display:flex; flex-direction:column; border-right:1px solid var(--border); overflow:hidden; }
+  .lb-header { padding:.7rem 1rem; background:var(--surface2); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+  .lb-header h2 { font-family:'Orbitron',monospace; font-size:.85rem; color:var(--accent); }
+  .lb-live { display:flex; align-items:center; gap:.4rem; font-family:'Share Tech Mono',monospace; font-size:.62rem; color:var(--green); }
+  .lb-live .dot { width:7px; height:7px; border-radius:50%; background:var(--green); animation:blink 1.4s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+  .tabs { display:flex; gap:3px; padding:.4rem .8rem; background:var(--surface); border-bottom:1px solid var(--border); flex-shrink:0; }
+  .tab { font-family:'Orbitron',monospace; font-size:.55rem; padding:.3rem .7rem; cursor:pointer; border:1px solid var(--border); color:var(--dim); background:transparent; transition:all .15s; }
+  .tab.active { background:var(--accent); border-color:var(--accent); color:var(--bg); }
+  .lb-scroll { flex:1; overflow-y:auto; padding:.5rem; }
+  .lb-scroll::-webkit-scrollbar { width:4px; }
+  .lb-scroll::-webkit-scrollbar-thumb { background:var(--border); }
+  .lb-row { display:flex; align-items:center; gap:.6rem; padding:.5rem .7rem; margin-bottom:3px; background:var(--surface2); border:1px solid var(--border); position:relative; overflow:hidden; }
+  .lb-row::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--border); }
+  .lb-row.r1::before { background:var(--gold); }
+  .lb-row.r2::before { background:#c0c0c0; }
+  .lb-row.r3::before { background:#cd7f32; }
+  .lb-rank { font-family:'Orbitron',monospace; font-size:.8rem; font-weight:700; min-width:28px; text-align:center; }
+  .r1 .lb-rank { color:var(--gold); }
+  .r2 .lb-rank { color:#c0c0c0; }
+  .r3 .lb-rank { color:#cd7f32; }
+  .lb-info { flex:1; min-width:0; }
+  .lb-name { font-weight:600; font-size:.85rem; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .lb-game { font-family:'Share Tech Mono',monospace; font-size:.62rem; color:var(--dim); }
+  .lb-score { font-family:'Orbitron',monospace; font-size:1rem; font-weight:700; color:var(--yellow); }
+  .empty-msg { text-align:center; padding:3rem 1rem; font-family:'Share Tech Mono',monospace; font-size:.78rem; color:var(--dim); line-height:2; }
+  /* Results table */
+  .res-table { width:100%; border-collapse:collapse; font-size:.72rem; }
+  .res-table th { font-family:'Orbitron',monospace; font-size:.55rem; color:var(--bg); padding:.4rem .5rem; background:var(--accent); border:1px solid var(--border); position:sticky; top:0; }
+  .res-table td { padding:.4rem .5rem; border:1px solid var(--border); color:var(--text); }
+  .res-table tr:nth-child(even) td { background:rgba(0,212,255,.03); }
+
+  /* ── RIGHT PANEL ── */
+  .right-panel { display:flex; flex-direction:column; overflow:hidden; }
+  .stats-strip { display:flex; flex-wrap:wrap; border-bottom:1px solid var(--border); flex-shrink:0; }
+  .stat-box { flex:1; min-width:70px; padding:.6rem .5rem; text-align:center; border-right:1px solid var(--border); }
+  .stat-box:last-child { border-right:none; }
+  .stat-v { font-family:'Orbitron',monospace; font-size:1.3rem; font-weight:700; color:var(--accent); }
+  .stat-l { font-family:'Share Tech Mono',monospace; font-size:.55rem; color:var(--dim); text-transform:uppercase; margin-top:2px; }
+  .right-scroll { flex:1; overflow-y:auto; padding:.7rem; }
+  .section-title { font-family:'Orbitron',monospace; font-size:.6rem; color:var(--dim); letter-spacing:.1em; margin-bottom:.5rem; padding-bottom:.3rem; border-bottom:1px solid var(--border); }
+  .game-row { display:flex; justify-content:space-between; align-items:center; padding:.3rem 0; border-bottom:1px dashed rgba(30,58,95,.5); }
+  .game-row .gn { font-family:'Share Tech Mono',monospace; font-size:.72rem; color:var(--text); }
+  .game-row .gc { font-family:'Orbitron',monospace; font-size:.8rem; color:var(--accent); }
+  .gs-config { margin-top:.8rem; }
+  .gs-config label { font-family:'Share Tech Mono',monospace; font-size:.62rem; color:var(--dim); display:block; margin-bottom:.3rem; }
+  .gs-config input { width:100%; background:var(--surface2); border:1px solid var(--border); color:var(--text); font-family:'Share Tech Mono',monospace; font-size:.62rem; padding:.4rem .6rem; outline:none; margin-bottom:.35rem; }
+  .gs-config input:focus { border-color:var(--accent); }
+  .gs-status { display:flex; align-items:center; gap:.4rem; margin-top:.4rem; }
+  .gs-dot { width:8px; height:8px; border-radius:50%; background:var(--border); flex-shrink:0; }
+  .gs-dot.on  { background:var(--green); box-shadow:0 0 6px var(--green); }
+  .gs-dot.err { background:var(--red); }
+  .gs-status-text { font-family:'Share Tech Mono',monospace; font-size:.62rem; color:var(--dim); }
+
+  /* ── BOTTOMBAR ── */
+  .bottombar { position:relative; z-index:10; background:var(--surface); border-top:1px solid var(--border); padding:.4rem 1.2rem; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+  .footer-txt { font-family:'Share Tech Mono',monospace; font-size:.6rem; color:var(--dim); letter-spacing:.04em; }
+
+  /* ── POL MODAL ── */
+  .modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:100; align-items:center; justify-content:center; }
+  .modal-bg.open { display:flex; }
+  .modal { background:var(--surface); border:1px solid var(--accent); padding:1.6rem; max-width:460px; width:90%; max-height:90vh; overflow-y:auto; }
+  .modal h2 { font-family:'Orbitron',monospace; font-size:.9rem; color:var(--accent); margin-bottom:1rem; }
+  .modal label { font-family:'Share Tech Mono',monospace; font-size:.68rem; color:var(--dim); display:block; margin-bottom:.25rem; margin-top:.6rem; }
+  .modal input { width:100%; background:var(--surface2); border:1px solid var(--border); color:var(--text); font-family:'Share Tech Mono',monospace; font-size:.8rem; padding:.45rem .7rem; outline:none; margin-bottom:.15rem; }
+  .modal input:focus { border-color:var(--accent); }
+  .modal-btns { display:flex; gap:.5rem; margin-top:1rem; justify-content:flex-end; flex-wrap:wrap; }
+
+  /* ── ANNOUNCE ── */
+  .announce { position:fixed; bottom:3rem; left:50%; transform:translateX(-50%) translateY(20px); background:var(--surface); border:1px solid var(--accent); color:var(--accent); font-family:'Share Tech Mono',monospace; font-size:.78rem; padding:.5rem 1.2rem; opacity:0; transition:all .3s; z-index:200; white-space:nowrap; pointer-events:none; }
+  .announce.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* ── PIN ── */
+  #pin-screen { position:fixed; inset:0; background:var(--bg); z-index:500; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:1rem; }
+  #pin-screen h1 { font-family:'Orbitron',monospace; font-size:1.2rem; color:var(--accent); }
+  #pin-screen p  { font-family:'Share Tech Mono',monospace; font-size:.78rem; color:var(--dim); }
+  #pin-input { font-family:'Orbitron',monospace; font-size:1.5rem; letter-spacing:.4em; text-align:center; background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:.6rem 1rem; outline:none; width:180px; }
+  #pin-input:focus { border-color:var(--accent); }
+  #pin-error { font-family:'Share Tech Mono',monospace; font-size:.72rem; color:var(--red); min-height:1.2rem; }
+</style>
+</head>
+<body>
+
+<!-- PIN SCREEN -->
+<div id="pin-screen">
+  <h1>🖥 TEACHER DASHBOARD</h1>
+  <p>KS3 Year 8 Computer Science — CBA</p>
+  <input id="pin-input" type="password" placeholder="PIN" maxlength="8" onkeydown="if(event.key==='Enter')checkPin()"/>
+  <div id="pin-error"></div>
+  <button class="btn btn-pri" onclick="checkPin()" style="margin-top:.3rem;">ENTER →</button>
+  <p style="margin-top:1rem;font-size:.62rem;">Default PIN: 1234</p>
+</div>
+
+<!-- MAIN DASHBOARD (hidden until PIN) -->
+<div id="dashboard" style="display:none;contents">
+
+<div class="topbar">
+  <div>
+    <div class="tb-logo">CBA <em style="color:var(--accent2);font-style:normal">//</em> CS DEPT</div>
+    <div class="tb-title">TEACHER DASHBOARD — KS3 YEAR 8</div>
+  </div>
+  <div class="tb-controls">
+    <div style="font-family:'Share Tech Mono',monospace;font-size:.62rem;color:var(--dim);">REFRESH: <span id="countdown" style="color:var(--accent);">10s</span></div>
+    <button class="btn btn-pri" onclick="refreshNow()">⟳ REFRESH</button>
+    <button class="btn btn-org" onclick="openPoL()">📝 PROOF OF LEARNING</button>
+    <button class="btn btn-red" onclick="confirmClear()">🗑 CLEAR</button>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">☀ LIGHT</button>
+    <div class="tb-clock" id="clock">00:00:00</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- LEFT: LEADERBOARD -->
+  <div class="lb-panel">
+    <div class="lb-header">
+      <h2>🏆 CLASS LEADERBOARD</h2>
+      <div class="lb-live"><div class="dot"></div>LIVE</div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" id="tab-lb"  onclick="switchTab('lb',this)">LEADERBOARD</button>
+      <button class="tab" id="tab-all" onclick="switchTab('all',this)">ALL RESULTS</button>
+    </div>
+    <!-- Leaderboard view -->
+    <div id="view-lb" class="lb-scroll"></div>
+    <!-- All results table -->
+    <div id="view-all" style="display:none;flex:1;overflow:auto;padding:.5rem;">
+      <table class="res-table">
+        <thead><tr><th>NAME</th><th>GAME</th><th>SCORE</th><th>DETAIL</th><th>TIME</th></tr></thead>
+        <tbody id="all-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- RIGHT: STATS -->
+  <div class="right-panel">
+    <div class="stats-strip">
+      <div class="stat-box"><div class="stat-v" id="st-students">0</div><div class="stat-l">STUDENTS</div></div>
+      <div class="stat-box"><div class="stat-v" id="st-plays">0</div><div class="stat-l">PLAYS</div></div>
+      <div class="stat-box"><div class="stat-v" id="st-avg" style="font-size:.9rem">—</div><div class="stat-l">AVG SCORE</div></div>
+      <div class="stat-box"><div class="stat-v" id="st-top" style="font-size:.9rem">—</div><div class="stat-l">TOP SCORE</div></div>
+    </div>
+    <div class="right-scroll">
+      <div class="section-title">▸ GAME BREAKDOWN</div>
+      <div class="game-row"><span class="gn">🟩 Wordle</span><span class="gc" id="g-wordle">0</span></div>
+      <div class="game-row"><span class="gn">❓ Quiz</span><span class="gc" id="g-quiz">0</span></div>
+      <div class="game-row"><span class="gn">🔴 Connect 4</span><span class="gc" id="g-c4">0</span></div>
+      <div class="game-row"><span class="gn">🪢 Hangman</span><span class="gc" id="g-hm">0</span></div>
+
+      <div class="section-title" style="margin-top:1rem;">▸ GOOGLE SHEETS SYNC</div>
+      <div class="gs-config">
+        <label>Apps Script URL (optional)</label>
+        <input type="text" id="gs-url" placeholder="https://script.google.com/macros/s/…/exec" oninput="saveGsUrl()"/>
+        <div class="gs-status">
+          <div class="gs-dot" id="gs-dot"></div>
+          <span class="gs-status-text" id="gs-text">Not configured</span>
+        </div>
+      </div>
+
+      <div class="section-title" style="margin-top:1rem;">▸ CONTROLS</div>
+      <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
+        <button class="btn btn-sec" onclick="toggleAutoRefresh()" id="ar-btn">⏸ PAUSE</button>
+        <button class="btn btn-sec" onclick="downloadCSV()">⬇ CSV</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="bottombar">
+  <div class="footer-txt">CORBY BUSINESS ACADEMY — COMPUTER SCIENCE DEPARTMENT // KS3 YEAR 8</div>
+  <div class="footer-txt" id="last-update">Last update: —</div>
+</div>
+
+</div><!-- /dashboard -->
+
+<!-- ANNOUNCE -->
+<div class="announce" id="announce"></div>
+
+<!-- POL MODAL -->
+<div class="modal-bg" id="pol-modal">
+  <div class="modal">
+    <h2>📝 PROOF OF LEARNING</h2>
+    <label>Teacher Name</label><input id="pol-teacher" placeholder="e.g. Mr Smith"/>
+    <label>Class / Group</label><input id="pol-class" placeholder="e.g. 7A"/>
+    <label>Date</label><input id="pol-date" placeholder="e.g. 18/03/2026"/>
+    <label>Topic(s) Covered</label><input id="pol-topic" placeholder="e.g. Binary, MicroBit, Networks"/>
+    <label>Notes (optional)</label><input id="pol-notes" placeholder="e.g. Students used Chromebooks"/>
+    <div class="modal-btns">
+      <button class="btn btn-sec" onclick="closePoL()">CANCEL</button>
+      <button class="btn btn-org" onclick="downloadPoLCSV()">⬇ SPREADSHEET</button>
+      <button class="btn btn-pri" onclick="generatePoL()">📄 HTML REPORT</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM CLEAR -->
+<div class="modal-bg" id="clear-modal">
+  <div class="modal" style="max-width:340px;text-align:center;">
+    <h2>⚠ CLEAR ALL SCORES?</h2>
+    <p style="font-family:'Share Tech Mono',monospace;font-size:.75rem;color:var(--dim);margin:1rem 0;">This removes all scores from the live view. Export a CSV first if needed.</p>
+    <div class="modal-btns" style="justify-content:center;">
+      <button class="btn btn-sec" onclick="document.getElementById('clear-modal').classList.remove('open')">CANCEL</button>
+      <button class="btn btn-red" onclick="doClear()">CLEAR ALL</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const TEACHER_PIN = '1234'; // Change this
+const store = { get(k){try{return localStorage.getItem(k);}catch(e){return null;}}, set(k,v){try{localStorage.setItem(k,v);}catch(e){}} };
+
+let scores = [];
+let autoRefresh = true;
+let countdown = 10;
+let timer = null;
+let annTimer;
+let currentTab = 'lb';
+let gsUrl = store.get('ks3_y8_gs_url') || '';
+
+// ── PIN ──
+function checkPin() {
+  const val = document.getElementById('pin-input').value;
+  if (val === TEACHER_PIN) {
+    document.getElementById('pin-screen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'contents';
+    const gi = document.getElementById('gs-url'); if(gi && gsUrl) gi.value = gsUrl;
+    updateGsDot();
+    loadScores();
+    startCountdown();
+    setInterval(updateClock, 1000); updateClock();
+  } else {
+    document.getElementById('pin-error').textContent = 'Incorrect PIN — try again';
+    document.getElementById('pin-input').value = '';
+    document.getElementById('pin-input').focus();
+  }
+}
+document.getElementById('pin-input').addEventListener('keydown', e => { if(e.key==='Enter') checkPin(); });
+
+// ── CLOCK ──
+function updateClock() {
+  const n = new Date();
+  document.getElementById('clock').textContent =
+    String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0');
+}
+
+// ── COUNTDOWN ──
+function startCountdown() {
+  clearInterval(timer); countdown = 10;
+  timer = setInterval(() => {
+    countdown--;
+    const el = document.getElementById('countdown'); if(el) el.textContent = countdown+'s';
+    if (countdown <= 0) { loadScores(); if(autoRefresh) startCountdown(); }
+  }, 1000);
+}
+function toggleAutoRefresh() {
+  autoRefresh = !autoRefresh;
+  const btn = document.getElementById('ar-btn');
+  if (autoRefresh) { startCountdown(); btn.textContent = '⏸ PAUSE'; btn.className = 'btn btn-sec'; }
+  else { clearInterval(timer); btn.textContent = '▶ RESUME'; btn.className = 'btn btn-pri'; const el=document.getElementById('countdown');if(el)el.textContent='—'; }
+}
+function refreshNow() {
+  loadScores(); announce('🔄 REFRESHED');
+  if (autoRefresh) startCountdown();
+}
+
+// ── LOAD SCORES ──
+function loadScores() {
+  let all = [];
+
+  // Try fetching from Google Sheets (JSONP)
+  if (gsUrl) {
+    const cb = 'cb_' + Date.now();
+    const s  = document.createElement('script');
+    const t  = setTimeout(() => { cleanup(); updateGsDot('err'); processScores([]); }, 8000);
+    function cleanup() { clearTimeout(t); delete window[cb]; if(s.parentNode) s.parentNode.removeChild(s); }
+    window[cb] = function(data) {
+      cleanup();
+      if (data && data.status === 'ok' && Array.isArray(data.scores)) {
+        processScores(data.scores);
+        updateGsDot('ok');
+      } else { processScores([]); }
+    };
+    s.onerror = () => { cleanup(); updateGsDot('err'); fallbackLocal(); };
+    s.src = gsUrl + '?action=getScores&year=Y8&callback=' + cb + '&t=' + Date.now();
+    document.head.appendChild(s);
+  } else {
+    fallbackLocal();
+  }
+}
+
+function fallbackLocal() {
+  const raw = JSON.parse(store.get('ks3_y8_scores') || '[]');
+  processScores(raw);
+}
+
+function processScores(raw) {
+  scores = raw;
+  renderAll();
+  const el = document.getElementById('last-update');
+  if (el) el.textContent = 'Last update: ' + new Date().toLocaleTimeString('en-GB');
+}
+
+// ── RENDER ──
+function renderAll() {
+  renderLB();
+  renderAllTable();
+  renderStats();
+}
+
+function renderLB() {
+  const el = document.getElementById('view-lb'); if (!el) return;
+  if (!scores.length) { el.innerHTML = '<div class="empty-msg">🎮<br>No scores yet<br><span style="font-size:.65rem">Waiting for students to play…</span></div>'; return; }
+
+  // Aggregate by name — best score per game
+  const map = {};
+  scores.forEach(e => {
+    if (!map[e.name]) map[e.name] = { name:e.name, total:0, games:[] };
+    map[e.name].total += (e.score||0);
+    map[e.name].games.push(e.game);
+  });
+  const rows = Object.values(map).sort((a,b) => b.total - a.total);
+  const max = rows[0]?.total || 1;
+
+  el.innerHTML = rows.map((r, i) => {
+    const cls = i===0?'r1':i===1?'r2':i===2?'r3':'';
+    const rank = i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`;
+    const pct  = Math.round((r.total/max)*100);
+    const gameset = [...new Set(r.games)].map(g => `<span style="font-family:'Share Tech Mono',monospace;font-size:.58rem;padding:.1rem .4rem;border:1px solid var(--border);color:var(--dim);">${g}</span>`).join(' ');
+    return `<div class="lb-row ${cls}">
+      <div class="lb-rank">${rank}</div>
+      <div class="lb-info">
+        <div class="lb-name">${r.name}</div>
+        <div class="lb-game">${gameset}</div>
+        <div style="height:3px;background:var(--border);margin-top:4px;border-radius:2px;"><div style="width:${pct}%;height:100%;background:var(--accent);border-radius:2px;"></div></div>
+      </div>
+      <div class="lb-score">${r.total}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderAllTable() {
+  const el = document.getElementById('all-tbody'); if (!el) return;
+  if (!scores.length) { el.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:1rem;color:var(--dim);">No results yet</td></tr>'; return; }
+  el.innerHTML = [...scores].reverse().map(e =>
+    `<tr>
+      <td style="font-weight:600">${e.name||'—'}</td>
+      <td style="color:var(--accent)">${e.game||'—'}</td>
+      <td style="font-family:'Orbitron',monospace;color:var(--yellow);font-weight:700">${e.score||0}</td>
+      <td style="color:var(--dim)">${e.detail||'—'}</td>
+      <td style="color:var(--dim);white-space:nowrap">${e.date||'—'}</td>
+    </tr>`
+  ).join('');
+}
+
+function renderStats() {
+  const names = [...new Set(scores.map(e=>e.name))];
+  const avg   = scores.length ? Math.round(scores.reduce((s,e)=>s+(e.score||0),0)/scores.length) : 0;
+  const top   = scores.length ? Math.max(...scores.map(e=>e.score||0)) : 0;
+  const set = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  set('st-students', names.length);
+  set('st-plays',    scores.length);
+  set('st-avg',      avg || '—');
+  set('st-top',      top || '—');
+  set('g-wordle', scores.filter(e=>e.game==='Wordle').length);
+  set('g-quiz',   scores.filter(e=>e.game==='Quiz').length);
+  set('g-c4',     scores.filter(e=>e.game==='Connect4').length);
+  set('g-hm',     scores.filter(e=>e.game==='Hangman').length);
+}
+
+// ── TABS ──
+function switchTab(tab, btn) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('view-lb').style.display  = tab==='lb'  ? 'block' : 'none';
+  document.getElementById('view-all').style.display = tab==='all' ? 'block' : 'none';
+  if (tab==='all') renderAllTable();
+}
+
+// ── GOOGLE SHEETS ──
+function saveGsUrl() {
+  gsUrl = document.getElementById('gs-url').value.trim();
+  store.set('ks3_y8_gs_url', gsUrl);
+  updateGsDot();
+}
+function updateGsDot(state) {
+  const dot = document.getElementById('gs-dot');
+  const txt = document.getElementById('gs-text');
+  if (!dot || !txt) return;
+  if (state==='ok')  { dot.className='gs-dot on';  txt.textContent='Sheets connected ✓'; }
+  else if(state==='err'){ dot.className='gs-dot err'; txt.textContent='Cannot reach sheet'; }
+  else if (gsUrl)    { dot.className='gs-dot on';  txt.textContent='URL saved'; }
+  else               { dot.className='gs-dot';     txt.textContent='Not configured'; }
+}
+
+// ── CLEAR ──
+function confirmClear() { document.getElementById('clear-modal').classList.add('open'); }
+function doClear() {
+  document.getElementById('clear-modal').classList.remove('open');
+  store.set('ks3_y8_scores', '[]');
+  scores = [];
+  renderAll();
+  announce('🗑 SCORES CLEARED');
+  // Also clear from Sheets if configured
+  if (gsUrl) {
+    try {
+      const s = document.createElement('script');
+      s.src = gsUrl + '?action=clearScores&year=Y8&t=' + Date.now();
+      s.onload = s.onerror = () => { if(s.parentNode) s.parentNode.removeChild(s); };
+      document.head.appendChild(s);
+    } catch(e){}
+  }
+}
+
+// ── ANNOUNCE ──
+function announce(msg) {
+  const el = document.getElementById('announce'); if(!el) return;
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(annTimer);
+  annTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ── THEME ──
+function toggleTheme() {
+  document.body.classList.toggle('light');
+  const btn = document.getElementById('theme-btn');
+  btn.textContent = document.body.classList.contains('light') ? '🌙 DARK' : '☀ LIGHT';
+}
+
+// ── CSV DOWNLOAD ──
+function downloadCSV() {
+  if (!scores.length) { alert('No scores to export.'); return; }
+  const esc = v => { const s=String(v==null?'':v); return s.includes(',')||s.includes('"')?'"'+s.replace(/"/g,'""')+'"':s; };
+  const row = (...cols) => cols.map(esc).join(',');
+  const lines = [
+    row('Name','Game','Score','Detail','Date'),
+    ...scores.map(e => row(e.name||'',e.game||'',e.score||0,e.detail||'',e.date||''))
+  ].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\uFEFF'+lines],{type:'text/csv;charset=utf-8;'}));
+  a.download = 'CBA_KS3_Scores_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+}
+
+// ── PROOF OF LEARNING ──
+function openPoL()  { document.getElementById('pol-modal').classList.add('open'); document.getElementById('pol-date').value = new Date().toLocaleDateString('en-GB'); }
+function closePoL() { document.getElementById('pol-modal').classList.remove('open'); }
+
+function downloadPoLCSV() {
+  closePoL();
+  const teacher = document.getElementById('pol-teacher').value || '';
+  const cls     = document.getElementById('pol-class').value   || '';
+  const date    = document.getElementById('pol-date').value    || new Date().toLocaleDateString('en-GB');
+  const topic   = document.getElementById('pol-topic').value   || 'KS3 Computer Science';
+  const notes   = document.getElementById('pol-notes').value   || '';
+  const names   = [...new Set(scores.map(e=>e.name))];
+  const avg     = scores.length ? Math.round(scores.reduce((s,e)=>s+(e.score||0),0)/scores.length) : 0;
+
+  const esc = v => { const s=String(v==null?'':v); return s.includes(',')||s.includes('"')||s.includes('\n')?'"'+s.replace(/"/g,'""')+'"':s; };
+  const row = (...cols) => cols.map(esc).join(',');
+  const lines = [
+    row('CORBY BUSINESS ACADEMY — COMPUTER SCIENCE DEPARTMENT'),
+    row('KS3 Year 7 — Proof of Learning'),
+    '',
+    row('Teacher:',teacher,'Class:',cls,'Date:',date),
+    row('Topic:',topic),
+    notes ? row('Notes:',notes) : null,
+    '',
+    row('SUMMARY'),
+    row('Students played:',names.length,'Total plays:',scores.length,'Average score:',avg),
+    '',
+    row('LEADERBOARD'),
+    row('Rank','Name','Total Score','Games Played'),
+    ...(() => {
+      const map={};
+      scores.forEach(e=>{if(!map[e.name])map[e.name]={total:0,games:0};map[e.name].total+=(e.score||0);map[e.name].games++;});
+      return Object.entries(map).sort((a,b)=>b[1].total-a[1].total).map(([name,d],i)=>row(i+1,name,d.total,d.games));
+    })(),
+    '',
+    row('GAME BREAKDOWN'),
+    row('Game','Plays','Avg Score'),
+    ...['Wordle','Quiz','Connect4','Hangman'].map(g => {
+      const plays = scores.filter(e=>e.game===g);
+      const avg2  = plays.length ? Math.round(plays.reduce((s,e)=>s+(e.score||0),0)/plays.length) : 0;
+      return row(g, plays.length, avg2||'—');
+    }),
+    '',
+    row('ALL RESULTS'),
+    row('Name','Game','Score','Detail','Date'),
+    ...scores.map(e=>row(e.name||'',e.game||'',e.score||0,e.detail||'',e.date||''))
+  ].filter(l=>l!==null).join('\n');
+
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\uFEFF'+lines],{type:'text/csv;charset=utf-8;'}));
+  a.download = 'CBA_KS3_ProofOfLearning_'+date.replace(/\//g,'-')+'.csv';
+  a.click();
+}
+
+function generatePoL() {
+  closePoL();
+  const teacher = document.getElementById('pol-teacher').value || '(not entered)';
+  const cls     = document.getElementById('pol-class').value   || '(not entered)';
+  const date    = document.getElementById('pol-date').value    || new Date().toLocaleDateString('en-GB');
+  const topic   = document.getElementById('pol-topic').value   || 'KS3 Computer Science';
+  const notes   = document.getElementById('pol-notes').value;
+  const names   = [...new Set(scores.map(e=>e.name))];
+  const avg     = scores.length ? Math.round(scores.reduce((s,e)=>s+(e.score||0),0)/scores.length) : 0;
+  const top     = scores.length ? Math.max(...scores.map(e=>e.score||0)) : 0;
+
+  // Aggregate leaderboard
+  const map={};
+  scores.forEach(e=>{if(!map[e.name])map[e.name]={total:0,games:[]};map[e.name].total+=(e.score||0);map[e.name].games.push(e.game);});
+  const lb = Object.values(map).sort((a,b)=>b.total-a.total);
+
+  const lbRows = lb.slice(0,30).map((r,i)=>`
+    <tr style="background:${i%2?'#f8fbff':'#fff'}">
+      <td style="padding:5px 8px;font-weight:700">${i+1}</td>
+      <td style="padding:5px 8px;font-weight:600">${r.name}</td>
+      <td style="padding:5px 8px;color:#0077a8;font-weight:700">${r.total}</td>
+      <td style="padding:5px 8px;font-size:11px">${[...new Set(r.games)].join(', ')}</td>
+    </tr>`).join('');
+
+  const gameRows = ['Wordle','Quiz','Connect4','Hangman'].map(g => {
+    const plays = scores.filter(e=>e.game===g);
+    const a2 = plays.length ? Math.round(plays.reduce((s,e)=>s+(e.score||0),0)/plays.length) : 0;
+    return `<tr><td style="padding:4px 8px">${g}</td><td style="padding:4px 8px;font-weight:700;color:#0077a8">${plays.length}</td><td style="padding:4px 8px">${a2||'—'}</td></tr>`;
+  }).join('');
+
+  const doc = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Proof of Learning — ${cls} — ${date}</title>
+<style>body{font-family:Arial,sans-serif;font-size:13px;color:#0a1825;margin:0;padding:0}.page{max-width:900px;margin:0 auto;padding:30px}
+h1{font-size:17px;color:#0077a8;margin-bottom:3px}h2{font-size:12px;color:#c85000;margin:16px 0 5px;text-transform:uppercase;letter-spacing:.08em}
+.hdr{background:#0d1e33;color:#00d4ff;padding:14px 20px;margin-bottom:18px}.hdr .sub{color:#4a7a9b;font-size:11px;margin-top:3px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.box{border:1px solid #b0c8de;padding:8px 12px}.box .lbl{font-size:10px;color:#4a7a9b;text-transform:uppercase}.box .val{font-size:13px;font-weight:700;margin-top:2px}
+.stats{display:flex;gap:8px;margin-bottom:16px}.stat{flex:1;border:1px solid #b0c8de;padding:8px;text-align:center}
+.stat .n{font-size:22px;font-weight:900;color:#0077a8}.stat .l{font-size:10px;color:#4a7a9b;text-transform:uppercase}
+table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px}
+th{background:#0d1e33;color:#00d4ff;padding:6px 8px;text-align:left;font-size:11px}
+.sig{border-top:1px solid #b0c8de;margin-top:28px;padding-top:14px;display:flex;gap:36px}
+.sig-box{flex:1}.sig-box .line{border-bottom:1px solid #0a1825;height:28px;margin-bottom:3px}.sig-box .lbl{font-size:10px;color:#4a7a9b}
+.footer{text-align:center;margin-top:24px;font-size:10px;color:#4a7a9b;border-top:1px solid #b0c8de;padding-top:8px}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body>
+<div class="page">
+<div class="hdr"><h1>CORBY BUSINESS ACADEMY — COMPUTER SCIENCE DEPARTMENT</h1><div class="sub">KS3 Year 7 — Proof of Learning — Keyword Arena</div></div>
+<div class="grid">
+  <div class="box"><div class="lbl">Teacher</div><div class="val">${teacher}</div></div>
+  <div class="box"><div class="lbl">Class / Group</div><div class="val">${cls}</div></div>
+  <div class="box"><div class="lbl">Date of Lesson</div><div class="val">${date}</div></div>
+  <div class="box"><div class="lbl">Topics Covered</div><div class="val">${topic}</div></div>
+  ${notes?`<div class="box" style="grid-column:1/-1"><div class="lbl">Notes</div><div class="val">${notes}</div></div>`:''}
+</div>
+<div class="stats">
+  <div class="stat"><div class="n">${names.length}</div><div class="l">Students</div></div>
+  <div class="stat"><div class="n">${scores.length}</div><div class="l">Total Plays</div></div>
+  <div class="stat"><div class="n">${avg}</div><div class="l">Avg Score</div></div>
+  <div class="stat"><div class="n">${top}</div><div class="l">Top Score</div></div>
+</div>
+<h2>Leaderboard</h2>
+<table><thead><tr><th>#</th><th>Name</th><th>Total Score</th><th>Games Played</th></tr></thead><tbody>${lbRows}</tbody></table>
+<h2>Game Breakdown</h2>
+<table><thead><tr><th>Game</th><th>Plays</th><th>Avg Score</th></tr></thead><tbody>${gameRows}</tbody></table>
+<div class="sig">
+  <div class="sig-box"><div class="line"></div><div class="lbl">Teacher Signature</div></div>
+  <div class="sig-box"><div class="line"></div><div class="lbl">Observer / HoD</div></div>
+  <div class="sig-box"><div class="line"></div><div class="lbl">Date</div></div>
+</div>
+<div class="footer">CORBY BUSINESS ACADEMY — COMPUTER SCIENCE DEPARTMENT // Generated ${new Date().toLocaleString('en-GB')}</div>
+</div></body></html>`;
+
+  const w = window.open('', '_blank');
+  w.document.write(doc);
+  w.document.close();
+  setTimeout(() => w.print(), 800);
+}
+
+// ── INIT ──
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('pin-input').focus();
+});
+</script>
+</body>
+</html>
